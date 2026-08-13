@@ -1,0 +1,8 @@
+crons:
+  - name: daily-review-digest
+    description: "Emails authorized reviewers a daily summary of submissions awaiting review"
+    cron: "0 8 * * *"
+    endpoint: "{{BASE_URL}}/api/cron/digest"
+    method: POST
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    enabled: true

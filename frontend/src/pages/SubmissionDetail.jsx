@@ -10,6 +10,7 @@ import { useAuth } from "../context/AuthContext";
 const fmt = (n) => "$" + Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
 const scoreColor = (s) => (s >= 60 ? "#EF4444" : s >= 40 ? "#F59E0B" : "#22C55E");
 const PERIL_LABEL = { flood_risk: "Flood", seismic_risk: "Seismic", wildfire_risk: "Wildfire", wind_storm_risk: "Wind/Storm", theft_risk: "Theft", property_condition: "Property Cond.", security_risk: "Security" };
+const actColor = (a) => ({ reviewed: "#22C55E", flagged: "#EF4444", claimed: "#0EA5A0", released: "#9CA3AF" }[a] || "#0F2C4C");
 
 export default function SubmissionDetail() {
   const { id } = useParams();
@@ -71,7 +72,8 @@ export default function SubmissionDetail() {
   const setReview = async (status) => {
     try {
       await api.post(`/submissions/${id}/review`, { status, note });
-      setRec({ ...rec, submission_status: status, review_note: note });
+      const entry = { action: status.toLowerCase(), label: status, by: email, at: new Date().toISOString(), note };
+      setRec({ ...rec, submission_status: status, review_note: note, activity: [...(rec.activity || []), entry] });
       toast.success(`Submission marked as ${status}`);
     } catch { toast.error("Update failed"); }
   };
@@ -95,7 +97,9 @@ export default function SubmissionDetail() {
   const claim = async (action) => {
     try {
       const { data } = await api.post(`/submissions/${id}/claim`, { action });
-      setRec({ ...rec, assigned_to: data.assigned_to });
+      const entry = { action: action === "claim" ? "claimed" : "released",
+                      label: action === "claim" ? "Claimed" : "Released", by: email, at: new Date().toISOString() };
+      setRec({ ...rec, assigned_to: data.assigned_to, activity: [...(rec.activity || []), entry] });
       toast.success(action === "claim" ? "You claimed this submission" : "Submission released");
     } catch (e) { toast.error(e.response?.data?.detail || "Action failed"); }
   };
@@ -291,6 +295,24 @@ export default function SubmissionDetail() {
                 </tbody>
               </table>
             </div>
+          </Panel>
+        </div>
+
+        {/* Reviewer activity trail */}
+        <div className="mt-6">
+          <Panel title="Reviewer Activity">
+            {rec.activity && rec.activity.length ? (
+              <ol className="relative border-l border-[#E5E7EB] ml-2" data-testid="activity-trail">
+                {rec.activity.slice().reverse().map((a, i) => (
+                  <li key={i} className="ml-5 pb-4 last:pb-0 relative">
+                    <span className="absolute -left-[26px] top-1 w-3 h-3 rounded-full ring-4 ring-white" style={{ background: actColor(a.action) }} />
+                    <div className="text-sm text-[#1F2937]"><b className="capitalize">{a.label || a.action}</b> by {a.by === email ? "you" : a.by}</div>
+                    <div className="text-xs text-[#1F2937]/50 mono">{new Date(a.at).toLocaleString()}</div>
+                    {a.note && <div className="text-xs text-[#1F2937]/70 mt-1 italic">"{a.note}"</div>}
+                  </li>
+                ))}
+              </ol>
+            ) : <p className="text-sm text-[#1F2937]/50">No activity yet. Claim, review or flag this submission to start the trail.</p>}
           </Panel>
         </div>
 

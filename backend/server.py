@@ -16,7 +16,7 @@ import jwt
 import httpx
 from fpdf import FPDF
 from dotenv import load_dotenv
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Header
 from fastapi.responses import StreamingResponse
 from starlette.responses import Response as FileResponse
 from starlette.middleware.cors import CORSMiddleware
@@ -44,6 +44,7 @@ JWT_SECRET = os.environ["JWT_SECRET"]
 WHITELIST = [e.strip().lower() for e in os.environ["WHITELIST_EMAILS"].split(",") if e.strip()]
 PUBLIC_APP_URL = os.environ.get("PUBLIC_APP_URL", "").rstrip("/")
 LOGO_URL = os.environ.get("VERIDIAN_LOGO_URL", "")
+WEBHOOK_CRON_SECRET = os.environ.get("WEBHOOK_CRON_SECRET", "")
 RECEIPT_TTL = 24 * 3600  # signed receipt links valid 24h (prevents id enumeration)
 
 app = FastAPI()
@@ -613,6 +614,7 @@ async def process_submission(submission: SubmissionCreate):
             "submission_status": "Received",
             "review_note": "",
             "assigned_to": "",
+            "activity": [],
             "ai_insight": "",
         }
         await write_submission(record)
@@ -748,7 +750,15 @@ async def get_submission(submission_id: str, email: str = Depends(require_auth))
 
 @api.post("/submissions/{submission_id}/review")
 async def review_submission(submission_id: str, body: ReviewUpdate, email: str = Depends(require_auth)):
-    await update_submission(submission_id, {"submission_status": body.status, "review_note": body.note or ""})
+    data = await read_submissions()
+    rec = next((r for r in data if r["submission_id"] == submission_id), None)
+    if not rec:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    activity = rec.get("activity", [])
+    activity.append({"action": body.status.lower(), "label": body.status, "by": email,
+                     "at": datetime.now(timezone.utc).isoformat(), "note": body.note or ""})
+    await update_submission(submission_id, {"submission_status": body.status,
+                                            "review_note": body.note or "", "activity": activity})
     return {"status": "updated", "submission_status": body.status}
 
 
@@ -759,14 +769,19 @@ async def claim_submission(submission_id: str, body: ClaimUpdate, email: str = D
     if not rec:
         raise HTTPException(status_code=404, detail="Submission not found")
     current = rec.get("assigned_to", "")
+    activity = rec.get("activity", [])
     if body.action == "release":
         if current and current != email:
             raise HTTPException(status_code=403, detail="Assigned to another reviewer")
-        await update_submission(submission_id, {"assigned_to": ""})
+        activity.append({"action": "released", "label": "Released", "by": email,
+                         "at": datetime.now(timezone.utc).isoformat()})
+        await update_submission(submission_id, {"assigned_to": "", "activity": activity})
         return {"assigned_to": ""}
     if current and current != email:
         raise HTTPException(status_code=409, detail=f"Already claimed by {current}")
-    await update_submission(submission_id, {"assigned_to": email})
+    activity.append({"action": "claimed", "label": "Claimed", "by": email,
+                     "at": datetime.now(timezone.utc).isoformat()})
+    await update_submission(submission_id, {"assigned_to": email, "activity": activity})
     return {"assigned_to": email}
 
 
@@ -860,6 +875,47 @@ async def portfolio_overview(email: str = Depends(require_auth)):
         "average_natcat_score": avg_natcat,
         "capital_reserve_breaches": breaches,
     }
+
+
+async def _send_digest():
+    try:
+        data = await read_submissions()
+        pending = [r for r in data if r.get("submission_status") == "Received"]
+        pending.sort(key=lambda r: r["created_at"], reverse=True)
+        if pending:
+            rows = "".join(
+                f"<tr><td style='padding:7px 6px;border-bottom:1px solid #EEF1F4;font-size:13px'><b>{r['submission_id']}</b></td>"
+                f"<td style='padding:7px 6px;border-bottom:1px solid #EEF1F4;font-size:13px'>{r['submitter_name']}</td>"
+                f"<td style='padding:7px 6px;border-bottom:1px solid #EEF1F4;font-size:13px;text-align:right'>${r['total_sum_insured']:,.0f}</td>"
+                f"<td style='padding:7px 6px;border-bottom:1px solid #EEF1F4;font-size:13px;text-align:center'>{r['natcat_composite_score']}</td></tr>"
+                for r in pending[:50])
+            table = (f"<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;border:1px solid #EEF1F4;border-radius:8px;overflow:hidden;margin-top:12px'>"
+                     f"<tr style='background:#E6F7F5;color:#0F2C4C'><th style='text-align:left;padding:8px 6px;font-size:12px'>Reference</th><th style='text-align:left;padding:8px 6px;font-size:12px'>Submitter</th><th style='text-align:right;padding:8px 6px;font-size:12px'>Sum Insured</th><th style='text-align:center;padding:8px 6px;font-size:12px'>NatCat</th></tr>{rows}</table>")
+        else:
+            table = "<p style='color:#6B7280;font-size:13px'>No submissions are awaiting review. You're all caught up.</p>"
+        inner = (f"<h2 style='color:#0F2C4C;margin:0 0 6px;font-size:19px'>Daily review digest</h2>"
+                 f"<p style='color:#1F2937;font-size:14px;margin:0 0 4px'><b style='color:#0EA5A0'>{len(pending)}</b> submission(s) awaiting review.</p>{table}"
+                 f"<div style='text-align:center;margin-top:22px'><a href='{PUBLIC_APP_URL}/insights' style='background:#0EA5A0;color:#FFFFFF;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:bold;font-size:14px;display:inline-block'>Open Insights Dashboard</a></div>")
+        for reviewer in WHITELIST:
+            try:
+                await _post_email({"to": [reviewer],
+                                   "subject": f"Veridian - {len(pending)} submission(s) awaiting review",
+                                   "html": _email_shell(inner), "from_name": EMAIL_FROM_NAME})
+            except Exception as e:
+                logger.warning(f"[DIGEST] send to {reviewer} failed: {e}")
+        logger.info(f"[DIGEST] dispatched to {len(WHITELIST)} reviewers; {len(pending)} pending")
+    except Exception as e:
+        logger.error(f"[DIGEST] failed: {e}")
+
+
+@api.post("/cron/digest")
+async def cron_digest(authorization: str = Header(default="")):
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    expected = f"Bearer {WEBHOOK_CRON_SECRET}"
+    if not WEBHOOK_CRON_SECRET or not hmac.compare_digest(authorization, expected):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    asyncio.create_task(_send_digest())
+    return {"status": "accepted"}
 
 
 @api.get("/")

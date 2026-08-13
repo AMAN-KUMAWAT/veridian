@@ -52,6 +52,15 @@ USGS seismic, Open-Meteo wind. AI: Anthropic Claude (Emergent LLM key). Email/OT
   - Testing: iteration_3 (backend 38/38; caught Dashboard mapPoints crash) -> fixed -> iteration_4
     frontend 100% (heatmap 33 markers, claim/release, detail flow), zero bugs.
 
+- 2026-08 (v8 enhancements):
+  - Assignment Filter: inbox dropdown (All / Assigned to me / Unclaimed), client-side.
+  - Map Clustering: PortfolioMap uses leaflet.markercluster so dense pins group into clusters.
+  - Reviewer Activity: submission record.activity trail (claimed/released/reviewed/flagged with by+at+note),
+    appended in review/claim endpoints; shown as a timeline on detail.
+  - Email Digest: .emergent/crons.yml daily 08:00 UTC -> POST /api/cron/digest (Bearer WEBHOOK_CRON_SECRET,
+    401 otherwise, acks immediately + backgrounds _send_digest) emailing all reviewers the pending queue.
+  - Testing: iteration_5 caught assignee useMemo missing deps -> fixed (added assignee,email to deps).
+
 ## Backlog (P1/P2)
 - P1: signed/expiring tokens or rate-limit on public receipt.pdf (id enumeration risk).
 - P2: persist OTP store outside process memory; align route naming to plural.

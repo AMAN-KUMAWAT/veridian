@@ -24,6 +24,7 @@ export default function Dashboard() {
   // filters
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("All");
+  const [assignee, setAssignee] = useState("All");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [natMin, setNatMin] = useState(0);
@@ -63,6 +64,8 @@ export default function Dashboard() {
       const text = `${s.submission_id} ${s.submitter_name} ${s.submitter_email}`.toLowerCase();
       if (q && !text.includes(q.toLowerCase())) return false;
       if (status !== "All" && s.submission_status !== status) return false;
+      if (assignee === "Mine" && s.assigned_to !== email) return false;
+      if (assignee === "Unclaimed" && s.assigned_to) return false;
       if (natMin > s.natcat_composite_score || s.natcat_composite_score > natMax) return false;
       const d = new Date(s.created_at);
       if (dateFrom && d < new Date(dateFrom)) return false;
@@ -78,7 +81,7 @@ export default function Dashboard() {
       return 0;
     });
     return rows;
-  }, [subs, q, status, natMin, natMax, dateFrom, dateTo, sortKey, sortDir]);
+  }, [subs, q, status, assignee, email, natMin, natMax, dateFrom, dateTo, sortKey, sortDir]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -151,7 +154,7 @@ export default function Dashboard() {
         </div>
 
         {/* Filters */}
-        <div className="mt-4 bg-white border border-[#E5E7EB] rounded-xl p-4 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-4 bg-white border border-[#E5E7EB] rounded-xl p-4 grid md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0EA5A0]" />
             <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} data-testid="inbox-search"
@@ -160,6 +163,12 @@ export default function Dashboard() {
           <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} data-testid="inbox-status-filter"
             className="px-3 py-2.5 rounded-lg border border-[#E5E7EB] text-sm focus:ring-2 focus:ring-[#0EA5A0] focus:outline-none transition-colors">
             {["All", "Received", "Reviewed", "Flagged"].map((s) => <option key={s}>{s}</option>)}
+          </select>
+          <select value={assignee} onChange={(e) => { setAssignee(e.target.value); setPage(1); }} data-testid="inbox-assignee-filter"
+            className="px-3 py-2.5 rounded-lg border border-[#E5E7EB] text-sm focus:ring-2 focus:ring-[#0EA5A0] focus:outline-none transition-colors">
+            <option value="All">All assignees</option>
+            <option value="Mine">Assigned to me</option>
+            <option value="Unclaimed">Unclaimed</option>
           </select>
           <div className="flex items-center gap-2">
             <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} data-testid="inbox-date-from"

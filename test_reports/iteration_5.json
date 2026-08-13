@@ -1,0 +1,33 @@
+{
+  "summary": "Frontend-only regression for v7 iteration (assignment filter, map clustering, reviewer activity trail, and regression on treaty/exports). Logged in via OTP -> token cookie (amankunawat4u@gmail.com). 3 of 4 features work; 1 CRITICAL bug found in Assignment Filter useMemo dependency array causing the dropdown to not re-filter rows when only assignee changes.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Dashboard.jsx (Assignment Filter)",
+        "issue": "inbox-assignee-filter does NOT filter rows on its own. Setting 'Assigned to me' still showed all 15 rows with only 2 'You' badges (should show 2 rows). Setting 'Unclaimed' still showed 15 rows with only 13 Claim buttons (should show 13 rows). Root cause: useMemo dependency array at Dashboard.jsx:84 is `[subs, q, status, natMin, natMax, dateFrom, dateTo, sortKey, sortDir]` and is MISSING `assignee` and `email`. So changing assignee alone does not recompute the memo. When combined with a status change, the memo re-runs and applies the (already-updated) assignee value via closure, which is why 'Mine + Reviewed' correctly returned 1 row — masking the bug in the combined case only.",
+        "selector": "[data-testid='inbox-assignee-filter']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix Dashboard.jsx line 84 useMemo deps: add `assignee` and `email` to the dependency array so the Assignment Filter reacts to its own changes. Suggested: `[subs, q, status, assignee, email, natMin, natMax, dateFrom, dateTo, sortKey, sortDir]`."
+  ],
+  "critical_code_review_comments": [
+    "Dashboard.jsx:84 — useMemo missing `assignee` and `email` deps (silent stale-filter bug). eslint-plugin-react-hooks/exhaustive-deps would catch this; recommend enabling.",
+    "Dashboard.jsx:47 claim() also updates state on release, but a released row's `assigned_to` becomes empty — the setSubs uses data.assigned_to which is fine, no issue.",
+    "PortfolioMap.jsx looks clean — cluster group created once, layers cleared on points change, invalidateSize called."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "75% (3/4 features pass; assignment filter broken)"},
+  "test_credentials": "OTP login amankunawat4u@gmail.com (whitelist); OTP read from /var/log/supervisor/backend.err.log. Rate-limited to ~1 request / few minutes.",
+  "seed_data_creation": "None. Used existing seeded VRD-BEB1E0EF (which already had Claimed+Reviewed activity). Added TEST_ review + flag entries to its activity trail during Reviewer Activity test.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Login is via OTP with strict rate-limiting (~429 for repeat requests within a few minutes). Fastest path: request OTP once via curl, grep /var/log/supervisor/backend.err.log for `Generated code for <email>: NNNNNN`, POST /api/auth/verify-otp to obtain veridian_token JWT cookie, then inject via page.context.add_cookies() with domain='veridian-submission.preview.emergentagent.com', httpOnly, secure, sameSite='None'. This bypasses the OTP input UI entirely. Existing entries on VRD-BEB1E0EF activity trail after this run: Claimed, Reviewed (original), Reviewed (TEST), Flagged (TEST) — newest first ordering confirmed working. Map clustering verified: 6 clusters at default view collapse to individual leaflet-interactive circle markers after cluster click.",
+  "rca of the issue": "Bug: Assignment filter doesn't work standalone. Reproduction: /insights inbox -> select inbox-assignee-filter='Assigned to me' -> observe row count unchanged. Root cause: React useMemo omits `assignee`/`email` from deps at Dashboard.jsx line 84. React reuses the memoized `filtered` array because deps haven't changed, even though the filter callback references the new `assignee` value via closure — but the memo doesn't re-evaluate to pick it up. Mitigation: add `assignee` and `email` to the useMemo dependency array. Verified during test: Mine=15/15 (should be ~2), Unclaimed=15/15 (should be ~13), but Mine+Reviewed=1 works because status change triggers memo recompute which then reads current assignee."
+}

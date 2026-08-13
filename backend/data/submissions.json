@@ -1967,9 +1967,38 @@
       "security_risk": 100.0
     },
     "natcat_composite_score": 60.1,
-    "submission_status": "Received",
-    "review_note": "",
+    "submission_status": "Flagged",
+    "review_note": "TEST regression review note",
     "assigned_to": "amankunawat4u@gmail.com",
-    "ai_insight": ""
+    "ai_insight": "",
+    "activity": [
+      {
+        "action": "claimed",
+        "label": "Claimed",
+        "by": "amankunawat4u@gmail.com",
+        "at": "2026-08-13T08:37:22.810948+00:00"
+      },
+      {
+        "action": "reviewed",
+        "label": "Reviewed",
+        "by": "amankunawat4u@gmail.com",
+        "at": "2026-08-13T08:37:22.939285+00:00",
+        "note": "Looks acceptable, within appetite."
+      },
+      {
+        "action": "reviewed",
+        "label": "Reviewed",
+        "by": "amankunawat4u@gmail.com",
+        "at": "2026-08-13T08:51:55.913259+00:00",
+        "note": "TEST regression review note"
+      },
+      {
+        "action": "flagged",
+        "label": "Flagged",
+        "by": "amankunawat4u@gmail.com",
+        "at": "2026-08-13T08:51:57.437780+00:00",
+        "note": "TEST regression review note"
+      }
+    ]
   }
 ]
