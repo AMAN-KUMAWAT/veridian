@@ -2008,5 +2008,85 @@
         "note": "TEST regression review note"
       }
     ]
+  },
+  {
+    "submission_id": "VRD-28B8D344",
+    "submitter_name": "aman kumawat",
+    "submitter_email": "amankunawat4u@gmail.com",
+    "submitter_organization": "",
+    "created_at": "2026-08-13T09:42:09.606789+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "c-7 sahakar nagar jhotwara jaipur",
+        "region": "c-7 sahakar nagar jhotwara jaipur",
+        "property_type": "residential",
+        "construction_type": "Concrete",
+        "year_built": 2005,
+        "sum_insured": 500000.0,
+        "peril_focus": "",
+        "security_features": {
+          "alarm_system": true,
+          "security_cameras": true,
+          "smart_home_security": true,
+          "fire_sprinklers": true,
+          "fire_extinguishers": true,
+          "smoke_detectors": true,
+          "gated_access": true,
+          "basement_present": true
+        },
+        "lat": 39.5,
+        "lon": -98.35,
+        "risk_scores": {
+          "flood_risk": 55.0,
+          "seismic_risk": 54.0,
+          "wildfire_risk": 37.0,
+          "wind_storm_risk": 35.6,
+          "theft_risk": 50.0,
+          "property_condition": 18.9,
+          "security_risk": 0.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "modeled",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "modeled",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 37.5,
+        "expected_loss": 187500.0
+      }
+    ],
+    "total_sum_insured": 500000.0,
+    "aggregate_expected_loss": 187500.0,
+    "exposure_by_region": {
+      "c-7 sahakar nagar jhotwara jaipur": 500000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 55.0,
+      "seismic_risk": 54.0,
+      "wildfire_risk": 37.0,
+      "wind_storm_risk": 35.6,
+      "theft_risk": 50.0,
+      "property_condition": 18.9,
+      "security_risk": 0.0
+    },
+    "avg_scores": {
+      "flood_risk": 55.0,
+      "seismic_risk": 54.0,
+      "wildfire_risk": 37.0,
+      "wind_storm_risk": 35.6,
+      "theft_risk": 50.0,
+      "property_condition": 18.9,
+      "security_risk": 0.0
+    },
+    "natcat_composite_score": 37.5,
+    "submission_status": "Received",
+    "review_note": "",
+    "assigned_to": "",
+    "activity": [],
+    "ai_insight": ""
   }
 ]
