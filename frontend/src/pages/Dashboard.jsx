@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { LogOut, Inbox, TrendingUp, AlertTriangle, Layers, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft } from "lucide-react";
+import { LogOut, Inbox, TrendingUp, AlertTriangle, Layers, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, MapPin, UserCheck, UserPlus } from "lucide-react";
 import { Wordmark } from "../components/Logo";
+import { PortfolioMap } from "../components/PortfolioMap";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -15,6 +17,7 @@ export default function Dashboard() {
   const { email, logout } = useAuth();
   const [subs, setSubs] = useState([]);
   const [overview, setOverview] = useState(null);
+  const [mapPoints, setMapPoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const nav = useNavigate();
 
@@ -32,13 +35,22 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const [s, o] = await Promise.all([api.get("/submissions"), api.get("/portfolio/overview")]);
-        setSubs(s.data); setOverview(o.data);
+        const [s, o, m] = await Promise.all([api.get("/submissions"), api.get("/portfolio/overview"), api.get("/portfolio/map")]);
+        setSubs(s.data); setOverview(o.data); setMapPoints(m.data.points || []);
       } finally { setLoading(false); }
     })();
   }, []);
 
   const doLogout = async () => { await logout(); nav("/insights/login"); };
+
+  const claim = async (e, s, action) => {
+    e.stopPropagation();
+    try {
+      const { data } = await api.post(`/submissions/${s.submission_id}/claim`, { action });
+      setSubs((prev) => prev.map((x) => x.submission_id === s.submission_id ? { ...x, assigned_to: data.assigned_to } : x));
+      toast.success(action === "claim" ? "Submission claimed" : "Submission released");
+    } catch (err) { toast.error(err.response?.data?.detail || "Action failed"); }
+  };
 
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -119,6 +131,21 @@ export default function Dashboard() {
         </div>
 
         <div className="mt-10 flex items-center gap-2">
+          <MapPin size={20} className="text-[#0EA5A0]" strokeWidth={1.5} />
+          <h2 className="font-head font-semibold text-xl text-[#0F2C4C]">Portfolio Risk Heatmap</h2>
+        </div>
+        <div className="mt-4 bg-white border border-[#E5E7EB] rounded-xl p-2">
+          {loading ? <div className="h-[380px] rounded-lg bg-[#F1F5F9] animate-pulse" />
+            : mapPoints.length ? <PortfolioMap points={mapPoints} />
+            : <div className="h-[380px] flex items-center justify-center text-[#1F2937]/50">No geocoded policies to map yet</div>}
+        </div>
+        <div className="mt-3 flex items-center gap-5 text-xs text-[#1F2937]/60">
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full inline-block" style={{ background: "#22C55E" }} /> Low (&lt;40)</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full inline-block" style={{ background: "#F59E0B" }} /> Moderate (40-59)</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full inline-block" style={{ background: "#EF4444" }} /> High (60+)</span>
+        </div>
+
+        <div className="mt-10 flex items-center gap-2">
           <Inbox size={20} className="text-[#0EA5A0]" strokeWidth={1.5} />
           <h2 className="font-head font-semibold text-xl text-[#0F2C4C]">Submissions Inbox</h2>
         </div>
@@ -162,16 +189,17 @@ export default function Dashboard() {
                 <SortHead label="Sum Insured" k="total_sum_insured" />
                 <SortHead label="NatCat" k="natcat_composite_score" />
                 <SortHead label="Status" k="submission_status" />
+                <th className="px-5 py-3">Assignee</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {loading && [...Array(5)].map((_, i) => (
-                <tr key={i} className="border-b border-[#F1F5F9]"><td colSpan={7} className="px-5 py-4">
+                <tr key={i} className="border-b border-[#F1F5F9]"><td colSpan={8} className="px-5 py-4">
                   <div className="h-5 bg-[#F1F5F9] rounded animate-pulse" /></td></tr>
               ))}
               {!loading && pageRows.length === 0 && (
-                <tr><td colSpan={7} className="px-5 py-12 text-center text-[#1F2937]/50" data-testid="inbox-empty">No submissions match your filters</td></tr>
+                <tr><td colSpan={8} className="px-5 py-12 text-center text-[#1F2937]/50" data-testid="inbox-empty">No submissions match your filters</td></tr>
               )}
               {!loading && pageRows.map((s, idx) => (
                 <tr key={s.submission_id} onClick={() => nav(`/insights/submission/${s.submission_id}`)}
@@ -186,6 +214,20 @@ export default function Dashboard() {
                   <td className="px-5 py-4 mono text-[#0F2C4C]">{fmt(s.total_sum_insured)}</td>
                   <td className="px-5 py-4"><span className="mono font-bold" style={{ color: scoreColor(s.natcat_composite_score) }}>{s.natcat_composite_score}</span></td>
                   <td className="px-5 py-4"><span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusStyle[s.submission_status] || ""}`}>{s.submission_status}</span></td>
+                  <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                    {s.assigned_to ? (
+                      <span className="inline-flex items-center gap-1.5 text-xs text-[#0F2C4C]" data-testid={`assignee-${s.submission_id}`}>
+                        <UserCheck size={13} className="text-[#0EA5A0]" />
+                        <span className="truncate max-w-[120px]">{s.assigned_to === email ? "You" : s.assigned_to}</span>
+                        {s.assigned_to === email && <button onClick={(e) => claim(e, s, "release")} className="text-[#EF4444] hover:underline">release</button>}
+                      </span>
+                    ) : (
+                      <button onClick={(e) => claim(e, s, "claim")} data-testid={`claim-${s.submission_id}`}
+                        className="inline-flex items-center gap-1 text-xs text-[#0EA5A0] hover:text-[#0F2C4C] transition-colors font-medium">
+                        <UserPlus size={13} /> Claim
+                      </button>
+                    )}
+                  </td>
                   <td className="px-5 py-4 text-right"><ChevronRight size={16} className="text-[#0EA5A0]" /></td>
                 </tr>
               ))}

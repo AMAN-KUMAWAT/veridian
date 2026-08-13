@@ -20,3 +20,4 @@ backend/data/submissions.json
 .DS_Store
 *.log
 frontend/node_modules/.cache/default-development/3.pack
+frontend/node_modules/.cache/default-development/4.pack

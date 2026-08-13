@@ -1,0 +1,40 @@
+{
+  "summary": "Veridian v7 iteration test — Receipt link security, Reviewer Assignment, Portfolio Heatmap, and Email Branding. Backend: created /app/backend/tests/test_v7_security_assignment_map.py with 11 tests — ALL PASS (receipt 403 w/o token, 200 w/ SSE-emitted token, 403 w/ tampered token; claim sets assigned_to, list_submissions reflects it, second reviewer gets 409, release clears; /api/portfolio/map 401 w/o auth and returns points with lat/lon/composite/address/sum_insured when authed; OTP request-otp returns 200 with delivery_delayed warning while Resend is rate-limited; backend log shows receipt email path executed without error). Also re-ran regression: test_v6_upgrade.py (10/10 after adjusting test_receipt_pdf_public_no_scores to expect 403 since receipt is now token-gated) + backend_test.py (17/17). Total backend 38/38 pass. Frontend: /submit portal fully works — full E2E form submission (submitter-name/email + policy-address-0/year-0/sum-0), Run Risk Analysis, Submission Received screen, and download-receipt-button href correctly contains ?token=... and downloads a valid application/pdf (HTTP 200). CRITICAL FRONTEND BUG: Dashboard.jsx (/insights) crashes on render with ReferenceError: mapPoints is not defined — the JSX at line 138 references `mapPoints` but the variable is never declared and /api/portfolio/map is never fetched from the useEffect (line 34-41 only fetches /submissions and /portfolio/overview). This crash triggers ErrorBoundary and renders 'Something went wrong', blocking: (a) Portfolio Risk Heatmap panel, (b) inbox rendering entirely (no rows, no claim-{id} buttons), (c) all regression flows on the dashboard, (d) navigation into submission detail pages via inbox rows. Because the inbox never renders, Submission Detail claim-button / release-button / assignee-badge could not be UI-tested end-to-end; backend claim/release for those testids works (verified via API in test_v7). Receipt security and email branding require no additional main-agent action.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Dashboard.jsx (/insights)", "issue": "ReferenceError: mapPoints is not defined at line 138. The useEffect (line 34-41) fetches /submissions and /portfolio/overview but never /portfolio/map, and no useState for mapPoints exists. Whole page crashes into ErrorBoundary ('Something went wrong'), blocking heatmap, inbox, claim buttons, and detail navigation.", "selector": "N/A (module-level render error)", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Portfolio Heatmap render + Inbox render + Submission Detail navigation", "issue": "All three are gated on Dashboard.jsx rendering successfully. Because of the mapPoints ReferenceError, none of these authenticated flows can be exercised in the browser until the fetch + state for /portfolio/map is added.", "affected_selectors": ["portfolio-map", "claim-{submission_id}", "claim-button", "release-button", "assignee-badge", "submission-row-*"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_v7_security_assignment_map.py",
+    "/app/backend/tests/test_v6_upgrade.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/v7_results.xml"
+  ],
+  "action_items": [
+    "FIX Dashboard.jsx: add `const [mapPoints, setMapPoints] = useState([])` and include `api.get('/portfolio/map')` in the initial Promise.all, setting setMapPoints(m.data.points). This unblocks the entire /insights page (heatmap + inbox + claim + detail nav).",
+    "After fix, re-verify: (a) Leaflet [data-testid=portfolio-map] with colored circleMarkers + Low/Moderate/High legend, (b) inbox rows show claim-{submission_id} buttons that assign via toast + 'You', (c) submission detail claim-button -> assignee-badge + release-button flow."
+  ],
+  "critical_code_review_comments": [
+    "Dashboard.jsx line 138 uses undeclared `mapPoints` — this is a hard compile-time-should-have-been-caught issue that made it to production. Consider enabling `react-hooks/exhaustive-deps` and `no-undef` in ESLint strict mode; also add an ErrorBoundary reporting hook so the crash surfaces in dev logs rather than only in the browser.",
+    "Receipt token: `make_receipt_token` uses HMAC with 24h TTL — good. Consider also binding the token to the submitter email or IP for stronger defense; current design permits anyone with the URL to download for 24h, which is acceptable but should be documented (matches an email-link security model).",
+    "claim_submission: idempotent claim by same user returns 200 (verified). Response body could include the assignee_display or last_assigned_at for UI to render 'Handled by you since X'.",
+    "Dashboard useEffect should have granular error handling — currently one failed API in Promise.all leaves state undefined and can cascade to render errors."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_v7_security_assignment_map.py (new)",
+    "/app/backend/tests/test_v6_upgrade.py (updated test_receipt_pdf_public_no_scores -> test_receipt_pdf_no_scores to reflect new 403-without-token behavior)"
+  ],
+  "success_rate": {"backend": "100% (11/11 v7 + 10/10 v6 + 17/17 baseline = 38/38)", "frontend": "50% (/submit + tokenized receipt PASS; /insights Dashboard crashes -> heatmap/inbox/claim/detail all blocked)"},
+  "test_credentials": "Whitelist: amankunawat4u@gmail.com, aman7339811186@gmail.com, amanbaba.kumawat@gmail.com. OTP logged at /var/log/supervisor/backend.err.log as '[OTP] Generated code for <email>: NNNNNN'. During testing Resend returned delivery_delayed but request-otp still returns 200 and the OTP is still valid (correct behavior — good fix from iteration_2 feedback).",
+  "seed_data_creation": "Created a fresh v7 submission (VRD-BEB1E0EF via UI, plus VRD from test_v7 module-scoped fixture). Persisted to /app/backend/data/submissions.json.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "New backend suite: `pytest /app/backend/tests/test_v7_security_assignment_map.py -v -o addopts=''` (11 tests). Frontend Submit form testids are shortened (`submitter-name`, `submitter-email`, `policy-address-0`, `policy-year-0`, `policy-sum-0`, `submit-portfolio-button`) — NOT the `-input` suffixed forms. To reach /insights, get a cookie via curl (request-otp -> tail /var/log/supervisor/backend.err.log for '[OTP] Generated code for <email>: NNNNNN' -> verify-otp -> use veridian_token cookie value with domain=veridian-submission.preview.emergentagent.com, httpOnly=True, secure=True, sameSite='None'). Once the Dashboard mapPoints bug is fixed, exercise: portfolio-map data-testid + Leaflet circle markers (`.leaflet-interactive`), claim-{submission_id} buttons in the inbox row, and on detail page: claim-button -> assignee-badge -> release-button.",
+  "rca of the issue": "Dashboard.jsx was updated in this iteration to add the Portfolio Heatmap panel (line 132-145). The JSX correctly references `mapPoints.length` and passes `mapPoints` to <PortfolioMap>, but the developer forgot to (1) declare `const [mapPoints, setMapPoints] = useState([])`, and (2) fetch `/api/portfolio/map` in the mount useEffect. The variable is therefore undefined at render time, throwing ReferenceError and tripping the ErrorBoundary. Reproduction: (1) authenticate (inject veridian_token cookie), (2) navigate to /insights — the branded 'Something went wrong' screen appears immediately. Mitigation: add `const [mapPoints, setMapPoints] = useState([])` near line 20 and change the Promise.all to `const [s, o, m] = await Promise.all([api.get('/submissions'), api.get('/portfolio/overview'), api.get('/portfolio/map')]); setSubs(s.data); setOverview(o.data); setMapPoints(m.data.points || []);`. Backend endpoint is already working (verified: returns {points: [...]} with 22+ points)."
+}

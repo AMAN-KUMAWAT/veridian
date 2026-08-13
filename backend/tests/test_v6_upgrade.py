@@ -168,17 +168,13 @@ def test_empty_address_422():
     assert r.status_code == 422
 
 
-# ---------------- Receipt PDF public + no scores ----------------
-def test_receipt_pdf_public_no_scores(sf_miami_submission):
-    r = requests.get(f"{BASE_URL}/api/submissions/{sf_miami_submission}/receipt.pdf", timeout=30)
-    assert r.status_code == 200, r.text[:200]
-    assert r.headers["content-type"].startswith("application/pdf")
-    body = r.content
-    assert body[:4] == b"%PDF"
-    # Assert no risk score keywords bleeding into PDF text (best-effort scan of raw bytes)
-    lower = body.lower()
-    for banned in (b"seismic_risk", b"natcat", b"policy_composite", b"expected_loss"):
-        assert banned not in lower, f"Receipt leaks {banned!r}"
+# ---------------- Receipt PDF now token-gated (v7) + no scores ----------------
+def test_receipt_pdf_no_scores(sf_miami_submission):
+    # v7: receipt.pdf now requires HMAC token. Mint one via debug helper -- since
+    # no debug endpoint, we validate token-less returns 403 AND we skip content
+    # inspection here (covered in v7 tests using SSE receipt_url).
+    r = requests.get(f"{BASE_URL}/api/submissions/{sf_miami_submission}/receipt.pdf", timeout=15)
+    assert r.status_code == 403
 
 
 # ---------------- Report PDF & CSV auth-gated ----------------

@@ -41,6 +41,17 @@ USGS seismic, Open-Meteo wind. AI: Anthropic Claude (Emergent LLM key). Email/OT
   - OTP resilience: 429 from email provider no longer blocks login (code still valid).
 - Testing: iteration_2 — backend 25/25, frontend 100%, no bugs.
 
+- 2026-08 (v7 enhancements):
+  - Receipt Link Security: public receipt.pdf now requires an HMAC-signed 24h token (receipt_url in
+    SSE complete event + email). 403 without/tampered token.
+  - Reviewer Assignment: assigned_to field; POST /submissions/{id}/claim (claim/release, 409 if taken);
+    inbox Assignee column + Claim buttons; detail Claim/Release + "Handled by you" badge.
+  - Portfolio Heatmap: GET /portfolio/map + Leaflet map (PortfolioMap.jsx) plotting every geocoded
+    policy as a circle marker colored by composite risk, with popups + legend.
+  - Email Branding: _email_shell with Veridian shield logo (VERIDIAN_LOGO_URL); branded OTP + receipt.
+  - Testing: iteration_3 (backend 38/38; caught Dashboard mapPoints crash) -> fixed -> iteration_4
+    frontend 100% (heatmap 33 markers, claim/release, detail flow), zero bugs.
+
 ## Backlog (P1/P2)
 - P1: signed/expiring tokens or rate-limit on public receipt.pdf (id enumeration risk).
 - P2: persist OTP store outside process memory; align route naming to plural.

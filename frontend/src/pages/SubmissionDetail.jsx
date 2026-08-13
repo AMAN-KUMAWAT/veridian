@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { ArrowLeft, Sparkles, CheckCircle2, Flag, Loader2, ShieldAlert, ShieldCheck, FileDown, Table2, Radio, Cpu } from "lucide-react";
+import { ArrowLeft, Sparkles, CheckCircle2, Flag, Loader2, ShieldAlert, ShieldCheck, FileDown, Table2, Radio, Cpu, UserCheck, UserPlus } from "lucide-react";
 import { Wordmark } from "../components/Logo";
 import { api, API } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 
 const fmt = (n) => "$" + Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
 const scoreColor = (s) => (s >= 60 ? "#EF4444" : s >= 40 ? "#F59E0B" : "#22C55E");
@@ -13,6 +14,7 @@ const PERIL_LABEL = { flood_risk: "Flood", seismic_risk: "Seismic", wildfire_ris
 export default function SubmissionDetail() {
   const { id } = useParams();
   const nav = useNavigate();
+  const { email } = useAuth();
   const [rec, setRec] = useState(null);
   const [note, setNote] = useState("");
   const [insight, setInsight] = useState("");
@@ -90,6 +92,14 @@ export default function SubmissionDetail() {
     } catch { toast.error("Could not generate insight"); } finally { setAiBusy(false); }
   };
 
+  const claim = async (action) => {
+    try {
+      const { data } = await api.post(`/submissions/${id}/claim`, { action });
+      setRec({ ...rec, assigned_to: data.assigned_to });
+      toast.success(action === "claim" ? "You claimed this submission" : "Submission released");
+    } catch (e) { toast.error(e.response?.data?.detail || "Action failed"); }
+  };
+
   const reportUrl = `${API}/submissions/${id}/report.pdf?cession=${cession}&attachment=${Math.round(attachment)}&reserve=${Math.round(reserve)}`;
   const csvUrl = `${API}/submissions/${id}/policies.csv`;
 
@@ -123,6 +133,17 @@ export default function SubmissionDetail() {
             <p className="text-sm text-[#1F2937]/60 mt-1">{rec.submitter_name} · {rec.submitter_email} · {rec.policies.length} policies</p>
           </div>
           <div className="flex items-center gap-3">
+            {rec.assigned_to ? (
+              <span className="px-3 py-2 rounded-full bg-[#E6F7F5] text-[#0EA5A0] text-xs font-medium flex items-center gap-1.5" data-testid="assignee-badge">
+                <UserCheck size={14} /> {rec.assigned_to === email ? "Handled by you" : `Handled by ${rec.assigned_to}`}
+                {rec.assigned_to === email && <button onClick={() => claim("release")} data-testid="release-button" className="ml-1 text-[#0F2C4C]/60 hover:text-[#EF4444] underline">release</button>}
+              </span>
+            ) : (
+              <button onClick={() => claim("claim")} data-testid="claim-button"
+                className="px-4 py-2 rounded-full border border-[#0EA5A0] text-[#0EA5A0] text-sm font-medium flex items-center gap-2 hover:bg-[#E6F7F5] transition-colors">
+                <UserPlus size={15} /> Claim
+              </button>
+            )}
             <a href={reportUrl} target="_blank" rel="noreferrer" data-testid="export-report-button"
               className="px-4 py-2 rounded-full bg-[#0F2C4C] text-white text-sm font-medium flex items-center gap-2 hover:-translate-y-px hover:shadow-lg transition-transform">
               <FileDown size={15} /> Export Full Report (PDF)

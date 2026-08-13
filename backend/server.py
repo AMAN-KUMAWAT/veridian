@@ -2,6 +2,7 @@ import os
 import io
 import csv
 import json
+import hmac
 import base64
 import asyncio
 import random
@@ -41,6 +42,9 @@ EMAIL_FROM_NAME = os.environ["EMAIL_FROM_NAME"]
 EMERGENT_LLM_KEY = os.environ["EMERGENT_LLM_KEY"]
 JWT_SECRET = os.environ["JWT_SECRET"]
 WHITELIST = [e.strip().lower() for e in os.environ["WHITELIST_EMAILS"].split(",") if e.strip()]
+PUBLIC_APP_URL = os.environ.get("PUBLIC_APP_URL", "").rstrip("/")
+LOGO_URL = os.environ.get("VERIDIAN_LOGO_URL", "")
+RECEIPT_TTL = 24 * 3600  # signed receipt links valid 24h (prevents id enumeration)
 
 app = FastAPI()
 api = APIRouter(prefix="/api")
@@ -159,6 +163,10 @@ class OTPVerify(BaseModel):
 class ReviewUpdate(BaseModel):
     status: Literal["Reviewed", "Flagged"]
     note: Optional[str] = ""
+
+
+class ClaimUpdate(BaseModel):
+    action: Literal["claim", "release"]
 
 
 # ----------------------------- Risk scoring (real APIs + documented stubs) -----------------------------
@@ -454,7 +462,53 @@ def build_policies_csv(rec: dict) -> str:
     return out.getvalue()
 
 
-# ----------------------------- Email -----------------------------
+# ----------------------------- Email + signed receipt links -----------------------------
+def make_receipt_token(submission_id: str) -> str:
+    exp = int(datetime.now(timezone.utc).timestamp()) + RECEIPT_TTL
+    sig = hmac.new(JWT_SECRET.encode(), f"{submission_id}:{exp}".encode(), hashlib.sha256).hexdigest()[:32]
+    return base64.urlsafe_b64encode(f"{exp}:{sig}".encode()).decode()
+
+
+def verify_receipt_token(submission_id: str, token: str) -> bool:
+    try:
+        exp_s, sig = base64.urlsafe_b64decode(token.encode()).decode().split(":")
+        exp = int(exp_s)
+    except Exception:
+        return False
+    if datetime.now(timezone.utc).timestamp() > exp:
+        return False
+    good = hmac.new(JWT_SECRET.encode(), f"{submission_id}:{exp}".encode(), hashlib.sha256).hexdigest()[:32]
+    return hmac.compare_digest(sig, good)
+
+
+def receipt_url(submission_id: str) -> str:
+    return f"{PUBLIC_APP_URL}/api/submissions/{submission_id}/receipt.pdf?token={make_receipt_token(submission_id)}"
+
+
+def _email_shell(inner: str) -> str:
+    logo = (f'<img src="{LOGO_URL}" alt="Veridian" width="34" height="34" '
+            f'style="display:inline-block;vertical-align:middle;border:0">') if LOGO_URL else ""
+    return f"""
+    <div style="margin:0;background:#F8FAFB;padding:32px 0;font-family:Arial,Helvetica,sans-serif">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+        <table role="presentation" width="520" cellpadding="0" cellspacing="0"
+               style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden">
+          <tr><td style="background:#0F2C4C;padding:20px 28px">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="padding-right:10px">{logo}</td>
+              <td style="color:#FFFFFF;font-size:20px;font-weight:bold;letter-spacing:.5px">Veridian</td>
+            </tr></table>
+            <div style="color:#0EA5A0;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:8px">Real-Time Risk Intelligence</div>
+          </td></tr>
+          <tr><td style="padding:28px">{inner}</td></tr>
+          <tr><td style="background:#F8FAFB;padding:16px 28px;color:#9AA3AF;font-size:11px;border-top:1px solid #EEF1F4">
+            (c) 2026 Veridian - Real-Time Risk Intelligence for Smarter Reinsurance
+          </td></tr>
+        </table>
+      </td></tr></table>
+    </div>"""
+
+
 async def _post_email(payload: dict):
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(f"{EMAIL_BASE_URL}/api/v1/email/send",
@@ -463,49 +517,40 @@ async def _post_email(payload: dict):
 
 
 async def send_otp_email(recipient: str, otp: str):
-    html = f"""
-    <table width="100%" style="background:#F8FAFB;padding:32px 0;font-family:Arial,sans-serif">
-      <tr><td align="center">
-        <table width="480" style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;padding:32px">
-          <tr><td style="color:#0F2C4C;font-size:22px;font-weight:bold;padding-bottom:8px">Veridian</td></tr>
-          <tr><td style="color:#1F2937;font-size:14px;padding-bottom:24px">Real-Time Risk Intelligence for Smarter Reinsurance</td></tr>
-          <tr><td style="color:#1F2937;font-size:15px;padding-bottom:12px">Your Insights Dashboard verification code is:</td></tr>
-          <tr><td style="background:#E6F7F5;color:#0F2C4C;font-size:34px;font-weight:bold;letter-spacing:10px;text-align:center;padding:18px;border-radius:8px">{otp}</td></tr>
-          <tr><td style="color:#6B7280;font-size:13px;padding-top:16px">This code expires in 5 minutes. If you did not request it, ignore this email.</td></tr>
-        </table>
-      </td></tr>
-    </table>
+    inner = f"""
+      <h2 style="color:#0F2C4C;margin:0 0 6px;font-size:19px">Verify your sign-in</h2>
+      <p style="color:#1F2937;font-size:14px;margin:0 0 20px">Use this one-time code to access the Insights Dashboard.</p>
+      <div style="background:#E6F7F5;color:#0F2C4C;font-size:34px;font-weight:bold;letter-spacing:12px;text-align:center;padding:18px;border-radius:10px">{otp}</div>
+      <p style="color:#6B7280;font-size:12px;margin-top:18px">This code expires in 5 minutes. If you didn't request it, you can ignore this email.</p>
     """
     await _post_email({"to": [recipient], "subject": f"Your Veridian code: {otp}",
-                       "html": html, "from_name": EMAIL_FROM_NAME})
+                       "html": _email_shell(inner), "from_name": EMAIL_FROM_NAME})
 
 
 async def send_receipt_email(rec: dict, pdf_bytes: bytes):
     rows = "".join(
-        f"<tr><td style='padding:6px;border-bottom:1px solid #eee'>{p['address']}</td>"
-        f"<td style='padding:6px;border-bottom:1px solid #eee'>{p['property_type']}</td>"
-        f"<td style='padding:6px;border-bottom:1px solid #eee'>${p['sum_insured']:,.0f}</td></tr>"
+        f"<tr><td style='padding:7px 6px;border-bottom:1px solid #EEF1F4;font-size:13px'>{p['address']}</td>"
+        f"<td style='padding:7px 6px;border-bottom:1px solid #EEF1F4;font-size:13px;text-transform:capitalize'>{p['property_type']}</td>"
+        f"<td style='padding:7px 6px;border-bottom:1px solid #EEF1F4;font-size:13px;text-align:right'>${p['sum_insured']:,.0f}</td></tr>"
         for p in rec["policies"])
-    html = f"""
-    <div style="font-family:Arial,sans-serif;background:#F8FAFB;padding:24px">
-      <div style="max-width:560px;margin:auto;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden">
-        <div style="background:#0F2C4C;color:#fff;padding:20px 24px;font-size:20px;font-weight:bold">Veridian</div>
-        <div style="padding:24px;color:#1F2937">
-          <h2 style="color:#0F2C4C;margin:0 0 8px">Submission received</h2>
-          <p>Thank you, {rec['submitter_name']}. Your portfolio has been received and will be assessed by an authorized reviewer.</p>
-          <p style="font-size:15px">Reference ID: <b style="color:#0EA5A0">{rec['submission_id']}</b></p>
-          <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px">
-            <tr style="background:#E6F7F5;color:#0F2C4C"><th style="text-align:left;padding:6px">Address</th><th style="text-align:left;padding:6px">Type</th><th style="text-align:left;padding:6px">Sum Insured</th></tr>
-            {rows}
-          </table>
-          <p style="color:#6B7280;font-size:12px;margin-top:16px">Your full receipt PDF is attached. Risk analytics remain reviewer-only by design.</p>
-        </div>
+    link = receipt_url(rec["submission_id"])
+    inner = f"""
+      <h2 style="color:#0F2C4C;margin:0 0 6px;font-size:19px">Submission received</h2>
+      <p style="color:#1F2937;font-size:14px;margin:0 0 8px">Thank you, {rec['submitter_name']}. Your portfolio has been received and will be assessed by an authorized reviewer.</p>
+      <p style="font-size:15px;margin:0 0 16px">Reference ID: <b style="color:#0EA5A0">{rec['submission_id']}</b></p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #EEF1F4;border-radius:8px;overflow:hidden">
+        <tr style="background:#E6F7F5;color:#0F2C4C"><th style="text-align:left;padding:8px 6px;font-size:12px">Address</th><th style="text-align:left;padding:8px 6px;font-size:12px">Type</th><th style="text-align:right;padding:8px 6px;font-size:12px">Sum Insured</th></tr>
+        {rows}
+      </table>
+      <div style="text-align:center;margin-top:24px">
+        <a href="{link}" style="background:#0EA5A0;color:#FFFFFF;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:bold;font-size:14px;display:inline-block">Download Receipt (PDF)</a>
+        <div style="color:#9AA3AF;font-size:11px;margin-top:10px">Secure link - expires in 24 hours. A copy is also attached.</div>
       </div>
-    </div>
+      <p style="color:#6B7280;font-size:12px;margin-top:18px">Risk analytics remain reviewer-only by design and are not included in this receipt.</p>
     """
     b64 = base64.b64encode(pdf_bytes).decode()
     payload = {"to": [rec["submitter_email"]], "subject": f"Veridian - Submission Receipt {rec['submission_id']}",
-               "html": html, "from_name": EMAIL_FROM_NAME,
+               "html": _email_shell(inner), "from_name": EMAIL_FROM_NAME,
                "attachments": [{"filename": f"{rec['submission_id']}_receipt.pdf", "content": b64}]}
     try:
         await _post_email(payload)
@@ -567,6 +612,7 @@ async def process_submission(submission: SubmissionCreate):
             **agg,
             "submission_status": "Received",
             "review_note": "",
+            "assigned_to": "",
             "ai_insight": "",
         }
         await write_submission(record)
@@ -581,15 +627,19 @@ async def process_submission(submission: SubmissionCreate):
             yield sse("email", "done", "Submission stored (receipt email could not be sent).")
 
         yield sse("complete", "complete", "Analysis complete.",
-                  {"submission_id": submission_id, "submitter_email": record["submitter_email"]})
+                  {"submission_id": submission_id, "submitter_email": record["submitter_email"],
+                   "receipt_url": receipt_url(submission_id)})
 
     return StreamingResponse(gen(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
-# ----------------------------- Public receipt download (submitter-safe) -----------------------------
+# ----------------------------- Public receipt download (signed, submitter-safe) -----------------------------
 @api.get("/submissions/{submission_id}/receipt.pdf")
-async def receipt_pdf(submission_id: str):
+async def receipt_pdf(submission_id: str, token: str = ""):
+    # Signed short-lived token required — prevents enumeration of submissions by guessing IDs.
+    if not verify_receipt_token(submission_id, token):
+        raise HTTPException(status_code=403, detail="Invalid or expired download link")
     data = await read_submissions()
     rec = next((r for r in data if r["submission_id"] == submission_id), None)
     if not rec:
@@ -681,6 +731,7 @@ async def list_submissions(email: str = Depends(require_auth)):
         "created_at": r["created_at"], "total_sum_insured": r["total_sum_insured"],
         "natcat_composite_score": r["natcat_composite_score"],
         "submission_status": r["submission_status"], "policy_count": len(r["policies"]),
+        "assigned_to": r.get("assigned_to", ""),
     } for r in data]
 
 
@@ -699,6 +750,40 @@ async def get_submission(submission_id: str, email: str = Depends(require_auth))
 async def review_submission(submission_id: str, body: ReviewUpdate, email: str = Depends(require_auth)):
     await update_submission(submission_id, {"submission_status": body.status, "review_note": body.note or ""})
     return {"status": "updated", "submission_status": body.status}
+
+
+@api.post("/submissions/{submission_id}/claim")
+async def claim_submission(submission_id: str, body: ClaimUpdate, email: str = Depends(require_auth)):
+    data = await read_submissions()
+    rec = next((r for r in data if r["submission_id"] == submission_id), None)
+    if not rec:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    current = rec.get("assigned_to", "")
+    if body.action == "release":
+        if current and current != email:
+            raise HTTPException(status_code=403, detail="Assigned to another reviewer")
+        await update_submission(submission_id, {"assigned_to": ""})
+        return {"assigned_to": ""}
+    if current and current != email:
+        raise HTTPException(status_code=409, detail=f"Already claimed by {current}")
+    await update_submission(submission_id, {"assigned_to": email})
+    return {"assigned_to": email}
+
+
+@api.get("/portfolio/map")
+async def portfolio_map(email: str = Depends(require_auth)):
+    data = await read_submissions()
+    points = []
+    for r in data:
+        for p in r["policies"]:
+            if p.get("lat") is not None and p.get("lon") is not None:
+                points.append({
+                    "submission_id": r["submission_id"], "policy_id": p["policy_id"],
+                    "address": p["address"], "lat": p["lat"], "lon": p["lon"],
+                    "composite": p["policy_composite"], "sum_insured": p["sum_insured"],
+                    "submitter_name": r["submitter_name"],
+                })
+    return {"points": points}
 
 
 @api.get("/submissions/{submission_id}/report.pdf")

@@ -34,6 +34,7 @@ export default function Submit() {
   const [policies, setPolicies] = useState([emptyPolicy()]);
   const [events, setEvents] = useState([]);
   const [refId, setRefId] = useState("");
+  const [receiptUrl, setReceiptUrl] = useState("");
   const [errors, setErrors] = useState({});
 
   const updatePolicy = (i, field, val) => {
@@ -102,7 +103,7 @@ export default function Submit() {
           if (!line) continue;
           const evt = JSON.parse(line);
           setEvents((prev) => [...prev, evt]);
-          if (evt.step_name === "complete") setRefId(evt.data.submission_id);
+          if (evt.step_name === "complete") { setRefId(evt.data.submission_id); setReceiptUrl(evt.data.receipt_url || ""); }
         }
       }
       setStage("done");
@@ -246,7 +247,7 @@ export default function Submit() {
               <div className="mono text-2xl font-bold text-[#0F2C4C]" data-testid="reference-id">{refId}</div>
             </div>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-              <a href={`${API}/submissions/${refId}/receipt.pdf`} target="_blank" rel="noreferrer"
+              <a href={receiptUrl} target="_blank" rel="noreferrer"
                 data-testid="download-receipt-button"
                 className="px-6 py-3 rounded-full bg-[#0EA5A0] text-white font-medium flex items-center gap-2 hover:-translate-y-px hover:shadow-lg transition-transform">
                 <Download size={17} /> Download Submission Receipt
