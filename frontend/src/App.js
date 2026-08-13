@@ -8,6 +8,7 @@ import Submit from "./pages/Submit";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import SubmissionDetail from "./pages/SubmissionDetail";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const Protected = ({ children }) => {
@@ -28,6 +29,7 @@ function App() {
               <Route path="/submit" element={<Submit />} />
               <Route path="/insights/login" element={<Login />} />
               <Route path="/insights" element={<Protected><Dashboard /></Protected>} />
+              <Route path="/insights/settings" element={<Protected><Settings /></Protected>} />
               <Route path="/insights/submission/:id" element={<Protected><SubmissionDetail /></Protected>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

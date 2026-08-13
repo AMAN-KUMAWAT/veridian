@@ -101,6 +101,23 @@ async def update_submission(submission_id: str, patch: dict):
         SUBMISSIONS_FILE.write_text(json.dumps(data, indent=2))
 
 
+PREFS_FILE = DATA_DIR / "reviewer_prefs.json"
+DEFAULT_PREFS = {"digest_enabled": True, "digest_hour": 8}
+
+
+def get_prefs(email: str) -> dict:
+    return {**DEFAULT_PREFS, **_read_json(PREFS_FILE, {}).get(email, {})}
+
+
+def set_prefs(email: str, patch: dict) -> dict:
+    data = _read_json(PREFS_FILE, {})
+    cur = {**DEFAULT_PREFS, **data.get(email, {})}
+    cur.update(patch)
+    data[email] = cur
+    PREFS_FILE.write_text(json.dumps(data, indent=2))
+    return cur
+
+
 # ----------------------------- Models -----------------------------
 class SecurityFeatures(BaseModel):
     alarm_system: bool = False
@@ -445,6 +462,15 @@ def build_report_pdf(rec: dict, cession: float, attachment: float, reserve: floa
         pdf.ln(3); pdf.set_font("Helvetica", "B", 11); pdf.cell(0, 7, "AI Underwriting Insight (Claude)", new_x="LMARGIN", new_y="NEXT")
         pdf.set_font("Helvetica", "", 9)
         pdf.multi_cell(0, 4.8, _clean(rec["ai_insight"]))
+    if rec.get("activity"):
+        pdf.ln(3); pdf.set_font("Helvetica", "B", 11); pdf.cell(0, 7, "Reviewer Activity (Audit Trail)", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("Helvetica", "", 9)
+        for a in rec["activity"]:
+            when = a.get("at", "")[:19].replace("T", " ")
+            line = f"- {a.get('label', a.get('action', ''))} by {a.get('by', '')} at {when} UTC"
+            if a.get("note"):
+                line += f" - note: {a['note']}"
+            pdf.multi_cell(0, 5, _clean(line))
     return bytes(pdf.output())
 
 
@@ -560,6 +586,24 @@ async def send_receipt_email(rec: dict, pdf_bytes: bytes):
         logger.warning(f"[EMAIL] attachment send failed ({e}); retrying without attachment")
         payload.pop("attachments", None)
         await _post_email(payload)
+
+
+async def send_assignment_email(rec: dict, reviewer: str):
+    try:
+        inner = (f"<h2 style='color:#0F2C4C;margin:0 0 6px;font-size:19px'>Submission assigned to you</h2>"
+                 f"<p style='color:#1F2937;font-size:14px'>You are now handling <b style='color:#0EA5A0'>{rec['submission_id']}</b> "
+                 f"from {rec.get('submitter_organization') or rec['submitter_name']}.</p>"
+                 f"<ul style='color:#1F2937;font-size:13px;padding-left:18px'>"
+                 f"<li>Policies: {len(rec['policies'])}</li>"
+                 f"<li>Total sum insured: ${rec['total_sum_insured']:,.0f}</li>"
+                 f"<li>NatCat composite: {rec['natcat_composite_score']}/100</li></ul>"
+                 f"<div style='text-align:center;margin-top:22px'><a href='{PUBLIC_APP_URL}/insights/submission/{rec['submission_id']}' "
+                 f"style='background:#0EA5A0;color:#FFFFFF;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:bold;font-size:14px;display:inline-block'>Open Submission</a></div>")
+        await _post_email({"to": [reviewer], "subject": f"Veridian - {rec['submission_id']} assigned to you",
+                           "html": _email_shell(inner), "from_name": EMAIL_FROM_NAME})
+        logger.info(f"[EMAIL] Assignment notice sent to {reviewer} for {rec['submission_id']}")
+    except Exception as e:
+        logger.warning(f"[EMAIL] assignment notice failed: {e}")
 
 
 # ----------------------------- Submission pipeline (SSE) -----------------------------
@@ -721,6 +765,28 @@ async def me(email: str = Depends(require_auth)):
     return {"email": email}
 
 
+class SettingsUpdate(BaseModel):
+    digest_enabled: bool
+    digest_hour: int
+
+    @field_validator("digest_hour")
+    @classmethod
+    def _hr(cls, v):
+        if v < 0 or v > 23:
+            raise ValueError("digest_hour must be 0-23")
+        return v
+
+
+@api.get("/settings")
+async def get_settings(email: str = Depends(require_auth)):
+    return get_prefs(email)
+
+
+@api.put("/settings")
+async def put_settings(body: SettingsUpdate, email: str = Depends(require_auth)):
+    return set_prefs(email, {"digest_enabled": body.digest_enabled, "digest_hour": body.digest_hour})
+
+
 # ----------------------------- Dashboard endpoints (protected) -----------------------------
 @api.get("/submissions")
 async def list_submissions(email: str = Depends(require_auth)):
@@ -782,6 +848,7 @@ async def claim_submission(submission_id: str, body: ClaimUpdate, email: str = D
     activity.append({"action": "claimed", "label": "Claimed", "by": email,
                      "at": datetime.now(timezone.utc).isoformat()})
     await update_submission(submission_id, {"assigned_to": email, "activity": activity})
+    asyncio.create_task(send_assignment_email(rec, email))
     return {"assigned_to": email}
 
 
@@ -877,7 +944,7 @@ async def portfolio_overview(email: str = Depends(require_auth)):
     }
 
 
-async def _send_digest():
+async def _send_digest(target_hour=None):
     try:
         data = await read_submissions()
         pending = [r for r in data if r.get("submission_status") == "Received"]
@@ -896,26 +963,35 @@ async def _send_digest():
         inner = (f"<h2 style='color:#0F2C4C;margin:0 0 6px;font-size:19px'>Daily review digest</h2>"
                  f"<p style='color:#1F2937;font-size:14px;margin:0 0 4px'><b style='color:#0EA5A0'>{len(pending)}</b> submission(s) awaiting review.</p>{table}"
                  f"<div style='text-align:center;margin-top:22px'><a href='{PUBLIC_APP_URL}/insights' style='background:#0EA5A0;color:#FFFFFF;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:bold;font-size:14px;display:inline-block'>Open Insights Dashboard</a></div>")
+        recipients = []
         for reviewer in WHITELIST:
+            p = get_prefs(reviewer)
+            if not p.get("digest_enabled", True):
+                continue
+            if target_hour is not None and int(p.get("digest_hour", 8)) != target_hour:
+                continue
+            recipients.append(reviewer)
+        for reviewer in recipients:
             try:
                 await _post_email({"to": [reviewer],
                                    "subject": f"Veridian - {len(pending)} submission(s) awaiting review",
                                    "html": _email_shell(inner), "from_name": EMAIL_FROM_NAME})
             except Exception as e:
                 logger.warning(f"[DIGEST] send to {reviewer} failed: {e}")
-        logger.info(f"[DIGEST] dispatched to {len(WHITELIST)} reviewers; {len(pending)} pending")
+        logger.info(f"[DIGEST] dispatched to {len(recipients)} reviewers (hour={target_hour}); {len(pending)} pending")
     except Exception as e:
         logger.error(f"[DIGEST] failed: {e}")
 
 
 @api.post("/cron/digest")
-async def cron_digest(authorization: str = Header(default="")):
+async def cron_digest(authorization: str = Header(default=""), force: bool = False):
     # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
     expected = f"Bearer {WEBHOOK_CRON_SECRET}"
     if not WEBHOOK_CRON_SECRET or not hmac.compare_digest(authorization, expected):
         raise HTTPException(status_code=401, detail="Unauthorized")
-    asyncio.create_task(_send_digest())
-    return {"status": "accepted"}
+    current_hour = None if force else datetime.now(timezone.utc).hour
+    asyncio.create_task(_send_digest(current_hour))
+    return {"status": "accepted", "hour": current_hour}
 
 
 @api.get("/")

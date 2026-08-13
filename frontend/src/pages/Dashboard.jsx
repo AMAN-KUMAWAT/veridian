@@ -109,6 +109,8 @@ export default function Dashboard() {
           <Wordmark light />
           <div className="flex items-center gap-4">
             <span className="text-sm text-[#E6F7F5]/80 hidden sm:block mono">{email}</span>
+            <button onClick={() => nav("/insights/settings")} data-testid="settings-link"
+              className="text-sm text-[#E6F7F5]/80 hover:text-white transition-colors">Settings</button>
             <button onClick={doLogout} data-testid="logout-button"
               className="flex items-center gap-1.5 text-sm text-white hover:text-[#0EA5A0] transition-colors">
               <LogOut size={16} /> Logout

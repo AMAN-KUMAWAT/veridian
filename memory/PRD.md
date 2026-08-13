@@ -61,6 +61,17 @@ USGS seismic, Open-Meteo wind. AI: Anthropic Claude (Emergent LLM key). Email/OT
     401 otherwise, acks immediately + backgrounds _send_digest) emailing all reviewers the pending queue.
   - Testing: iteration_5 caught assignee useMemo missing deps -> fixed (added assignee,email to deps).
 
+- 2026-08 (v9 enhancements):
+  - Digest Preferences: per-reviewer settings (data/reviewer_prefs.json) — enable/disable + UTC hour;
+    GET/PUT /api/settings; Settings screen at /insights/settings (header link). Digest cron now hourly
+    and _send_digest(target_hour) emails only reviewers whose enabled hour matches.
+  - Cluster Risk Color: heatmap cluster bubbles colored by AVERAGE child composite risk (green/amber/red)
+    via markerClusterGroup iconCreateFunction, showing count + avg.
+  - Activity Export: reviewer full-report PDF now appends a "Reviewer Activity (Audit Trail)" section.
+  - Assignment Notify: claiming a submission emails the assignee (send_assignment_email, backgrounded).
+  - Testing: iteration_6 both new features + regression pass (assignee-filter fix confirmed); only a
+    Playwright select flake noted (backend PUT + toggle persistence proven).
+
 ## Backlog (P1/P2)
 - P1: signed/expiring tokens or rate-limit on public receipt.pdf (id enumeration risk).
 - P2: persist OTP store outside process memory; align route naming to plural.

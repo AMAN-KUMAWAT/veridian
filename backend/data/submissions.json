@@ -1890,8 +1890,16 @@
     "natcat_composite_score": 51.9,
     "submission_status": "Flagged",
     "review_note": "TEST flag",
-    "assigned_to": "",
-    "ai_insight": "## CAT Portfolio Underwriting Recommendation \u2014 TEST Org\n\n---\n\n### (1) Dominant Perils Driving Loss\n\nWith an **Aggregate Expected CAT Loss of $8,361,000 against TSI of $17,000,000**, the implied loss ratio is a critical **49.2%** \u2014 well above acceptable CAT thresholds. Primary drivers are **seismic risk (52.4)** and **property condition (52.2)**, compounded by a **security risk score of 100.0** \u2014 a hard outlier demanding immediate attention. The **$12M New York concentration (70.6% of TSI)** amplifies wind/storm exposure, while the **$5M Mountain View position** elevates seismic and wildfire accumulation simultaneously.\n\n---\n\n### (2) Recommended Treaty Structure\n\n**Excess of Loss (XoL) is strongly preferred** over quota share given the severe loss severity relative to a tiny 2-policy portfolio. Recommend a **per-risk XoL with a retention of $500,000 and limit of $4,000,000**, ceding approximately **55\u201365% of probable maximum loss**. A **stop-loss aggregate cover triggering at $2,500,000** annual aggregate should backstop frequency creep.\n\n---\n\n### (3) Capital-Adequacy Caution\n\nThe **49.2% expected loss-to-TSI ratio on only 2 policies provides zero diversification buffer**. A single large seismic or wind event in New York could produce a **total portfolio loss event**. Capital reserves must be stress-tested at **1-in-100 PML, not mean expected loss**, before any additional risk is bound."
+    "assigned_to": "amankunawat4u@gmail.com",
+    "ai_insight": "## CAT Portfolio Underwriting Recommendation \u2014 TEST Org\n\n---\n\n### (1) Dominant Perils Driving Loss\n\nWith an **Aggregate Expected CAT Loss of $8,361,000 against TSI of $17,000,000**, the implied loss ratio is a critical **49.2%** \u2014 well above acceptable CAT thresholds. Primary drivers are **seismic risk (52.4)** and **property condition (52.2)**, compounded by a **security risk score of 100.0** \u2014 a hard outlier demanding immediate attention. The **$12M New York concentration (70.6% of TSI)** amplifies wind/storm exposure, while the **$5M Mountain View position** elevates seismic and wildfire accumulation simultaneously.\n\n---\n\n### (2) Recommended Treaty Structure\n\n**Excess of Loss (XoL) is strongly preferred** over quota share given the severe loss severity relative to a tiny 2-policy portfolio. Recommend a **per-risk XoL with a retention of $500,000 and limit of $4,000,000**, ceding approximately **55\u201365% of probable maximum loss**. A **stop-loss aggregate cover triggering at $2,500,000** annual aggregate should backstop frequency creep.\n\n---\n\n### (3) Capital-Adequacy Caution\n\nThe **49.2% expected loss-to-TSI ratio on only 2 policies provides zero diversification buffer**. A single large seismic or wind event in New York could produce a **total portfolio loss event**. Capital reserves must be stress-tested at **1-in-100 PML, not mean expected loss**, before any additional risk is bound.",
+    "activity": [
+      {
+        "action": "claimed",
+        "label": "Claimed",
+        "by": "amankunawat4u@gmail.com",
+        "at": "2026-08-13T09:35:09.966172+00:00"
+      }
+    ]
   },
   {
     "submission_id": "VRD-BEB1E0EF",
