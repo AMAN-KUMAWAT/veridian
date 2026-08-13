@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #0F2C4C;
+  --teal: #0EA5A0;
+  --tint: #E6F7F5;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --ink: #1F2937;
+  --bg: #F8FAFB;
+  --card: #FFFFFF;
+}
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-head { font-family: 'Outfit', sans-serif; }
+.font-mono, .mono { font-family: 'JetBrains Mono', monospace; }
+.overline { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 600; }
+
+::selection { background: #0EA5A0; color: #fff; }
+
+.glass-header {
+  backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.72);
+  border-bottom: 1px solid rgba(255,255,255,0.5);
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%; --foreground: 210 40% 20%;
+    --card: 0 0% 100%; --card-foreground: 210 40% 20%;
+    --popover: 0 0% 100%; --popover-foreground: 210 40% 20%;
+    --primary: 211 66% 18%; --primary-foreground: 0 0% 100%;
+    --secondary: 174 90% 95%; --secondary-foreground: 211 66% 18%;
+    --muted: 210 20% 96%; --muted-foreground: 215 16% 47%;
+    --accent: 176 85% 35%; --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%; --destructive-foreground: 0 0% 100%;
+    --border: 214 20% 90%; --input: 214 20% 90%; --ring: 176 85% 35%;
+    --radius: 0.6rem;
+  }
+}
+@layer base {
+  * { @apply border-border; }
+}

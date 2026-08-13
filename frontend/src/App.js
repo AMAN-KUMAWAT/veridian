@@ -1,0 +1,38 @@
+import "./App.css";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "./components/ui/sonner";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Landing from "./pages/Landing";
+import Submit from "./pages/Submit";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import SubmissionDetail from "./pages/SubmissionDetail";
+
+const Protected = ({ children }) => {
+  const { email, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-[#0F2C4C]">Loading…</div>;
+  if (!email) return <Navigate to="/insights/login" replace />;
+  return children;
+};
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/submit" element={<Submit />} />
+            <Route path="/insights/login" element={<Login />} />
+            <Route path="/insights" element={<Protected><Dashboard /></Protected>} />
+            <Route path="/insights/submission/:id" element={<Protected><SubmissionDetail /></Protected>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster position="top-right" richColors />
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;

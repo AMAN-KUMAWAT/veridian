@@ -1,0 +1,216 @@
+[
+  {
+    "submission_id": "VRD-F8D30A32",
+    "submitter_name": "Test Broker",
+    "submitter_email": "broker@acme.com",
+    "submitter_organization": "Acme Re",
+    "created_at": "2026-08-13T07:10:16.386964+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "1600 Amphitheatre Parkway, Mountain View, CA",
+        "region": "Mountain View",
+        "property_type": "commercial",
+        "construction_type": "Concrete",
+        "year_built": 2010,
+        "sum_insured": 2500000.0,
+        "peril_focus": "",
+        "lat": 37.4224858,
+        "lon": -122.0855846,
+        "risk_scores": {
+          "flood_risk": 40.0,
+          "seismic_risk": 100.0,
+          "wildfire_risk": 47.0,
+          "wind_storm_risk": 40.7,
+          "theft_risk": 34.0,
+          "property_condition": 14.4
+        },
+        "policy_composite": 52.0,
+        "expected_loss": 1300000.0
+      },
+      {
+        "policy_id": "POL-002",
+        "address": "200 E Colfax Ave, Denver, CO",
+        "region": "Denver",
+        "property_type": "residential",
+        "construction_type": "Wood",
+        "year_built": 1965,
+        "sum_insured": 800000.0,
+        "peril_focus": "flood-prone",
+        "lat": 39.7392115,
+        "lon": -104.9848467,
+        "risk_scores": {
+          "flood_risk": 45.0,
+          "seismic_risk": 2.4,
+          "wildfire_risk": 42.0,
+          "wind_storm_risk": 46.5,
+          "theft_risk": 40.0,
+          "property_condition": 66.9
+        },
+        "policy_composite": 37.2,
+        "expected_loss": 297600.0
+      }
+    ],
+    "total_sum_insured": 3300000.0,
+    "aggregate_expected_loss": 1597600.0,
+    "exposure_by_region": {
+      "Mountain View": 2500000.0,
+      "Denver": 800000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 41.2,
+      "seismic_risk": 76.3,
+      "wildfire_risk": 45.8,
+      "wind_storm_risk": 42.1,
+      "theft_risk": 35.5,
+      "property_condition": 27.1
+    },
+    "avg_scores": {
+      "flood_risk": 42.5,
+      "seismic_risk": 51.2,
+      "wildfire_risk": 44.5,
+      "wind_storm_risk": 43.6,
+      "theft_risk": 37.0,
+      "property_condition": 40.7
+    },
+    "natcat_composite_score": 44.7,
+    "submission_status": "Received",
+    "review_note": "",
+    "ai_insight": ""
+  },
+  {
+    "submission_id": "VRD-CB4EDC82",
+    "submitter_name": "Test User",
+    "submitter_email": "TEST_user@example.com",
+    "submitter_organization": "TEST Org",
+    "created_at": "2026-08-13T07:12:32.326352+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "1600 Amphitheatre Parkway, Mountain View, CA",
+        "region": "Mountain View",
+        "property_type": "commercial",
+        "construction_type": "concrete",
+        "year_built": 2005,
+        "sum_insured": 5000000.0,
+        "peril_focus": "earthquake",
+        "lat": 37.4224858,
+        "lon": -122.0855846,
+        "risk_scores": {
+          "flood_risk": 40.0,
+          "seismic_risk": 100.0,
+          "wildfire_risk": 47.0,
+          "wind_storm_risk": 40.7,
+          "theft_risk": 34.0,
+          "property_condition": 18.9
+        },
+        "policy_composite": 52.7,
+        "expected_loss": 2635000.0
+      },
+      {
+        "policy_id": "POL-002",
+        "address": "350 5th Ave, New York, NY",
+        "region": "New York",
+        "property_type": "commercial",
+        "construction_type": "steel",
+        "year_built": 1931,
+        "sum_insured": 12000000.0,
+        "peril_focus": "wind",
+        "lat": 40.7484421,
+        "lon": -73.9856589,
+        "risk_scores": {
+          "flood_risk": 40.0,
+          "seismic_risk": 4.8,
+          "wildfire_risk": 34.0,
+          "wind_storm_risk": 44.6,
+          "theft_risk": 37.0,
+          "property_condition": 85.5
+        },
+        "policy_composite": 37.9,
+        "expected_loss": 4548000.0
+      }
+    ],
+    "total_sum_insured": 17000000.0,
+    "aggregate_expected_loss": 7183000.0,
+    "exposure_by_region": {
+      "Mountain View": 5000000.0,
+      "New York": 12000000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 40.0,
+      "seismic_risk": 32.8,
+      "wildfire_risk": 37.8,
+      "wind_storm_risk": 43.5,
+      "theft_risk": 36.1,
+      "property_condition": 65.9
+    },
+    "avg_scores": {
+      "flood_risk": 40.0,
+      "seismic_risk": 52.4,
+      "wildfire_risk": 40.5,
+      "wind_storm_risk": 42.7,
+      "theft_risk": 35.5,
+      "property_condition": 52.2
+    },
+    "natcat_composite_score": 45.3,
+    "submission_status": "Flagged",
+    "review_note": "TEST flag",
+    "ai_insight": "## CAT Portfolio Underwriting Analysis \u2014 TEST Org\n\n---\n\n### (1) Dominant Perils Driving Loss\n\nSeismic risk (52.4) and property condition (52.2) are the primary concern drivers. The **Mountain View ($5M SI)** concentration carries the highest seismic exposure, while **New York ($12M SI)** \u2014 representing **70.6% of total SI** \u2014 amplifies wind/storm (42.7) and flood (40.0) risk materially in aggregate. The **aggregate expected CAT loss of $7,183,000 against $17M TSI yields a striking 42.3% loss ratio at SI level**, indicating severe portfolio stress before expenses or IBNR loading.\n\n---\n\n### (2) Recommended Treaty Structure\n\n**Excess of Loss (XoL) is strongly preferred** over quota share given the concentrated, high-severity profile. Recommended structure:\n\n- **Per-risk XoL:** Retention $500K xs $500K, limit to $4.5M\n- **Aggregate XoL backstop:** Retention at $2.5M annual aggregate, limit $5M\n- Suggested cession range: **55\u201365%** of peak-zone exposure (primarily New York seismic/wind stack)\n\n---\n\n### (3) Capital-Adequacy Caution\n\nAt a **42.3% CAT loss-to-SI ratio**, this portfolio is under-capitalized for a 1-in-100 return period event. With only 2 policies and zero diversification benefit, a **single severe event could breach 80%+ of aggregate SI**. Immediate PML review against available surplus is non-negotiable before binding additional capacity."
+  },
+  {
+    "submission_id": "VRD-1113E43A",
+    "submitter_name": "QA Bot",
+    "submitter_email": "qa@test.com",
+    "submitter_organization": "",
+    "created_at": "2026-08-13T07:14:03.137947+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "1 Market St, San Francisco, CA",
+        "region": "San Francisco",
+        "property_type": "residential",
+        "construction_type": "Concrete",
+        "year_built": 2010,
+        "sum_insured": 1500000.0,
+        "peril_focus": "",
+        "lat": 37.79382,
+        "lon": -122.3948144,
+        "risk_scores": {
+          "flood_risk": 32.0,
+          "seismic_risk": 100.0,
+          "wildfire_risk": 30.0,
+          "wind_storm_risk": 56.2,
+          "theft_risk": 41.0,
+          "property_condition": 14.4
+        },
+        "policy_composite": 51.3,
+        "expected_loss": 769500.0
+      }
+    ],
+    "total_sum_insured": 1500000.0,
+    "aggregate_expected_loss": 769500.0,
+    "exposure_by_region": {
+      "San Francisco": 1500000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 32.0,
+      "seismic_risk": 100.0,
+      "wildfire_risk": 30.0,
+      "wind_storm_risk": 56.2,
+      "theft_risk": 41.0,
+      "property_condition": 14.4
+    },
+    "avg_scores": {
+      "flood_risk": 32.0,
+      "seismic_risk": 100.0,
+      "wildfire_risk": 30.0,
+      "wind_storm_risk": 56.2,
+      "theft_risk": 41.0,
+      "property_condition": 14.4
+    },
+    "natcat_composite_score": 51.3,
+    "submission_status": "Flagged",
+    "review_note": "",
+    "ai_insight": ""
+  }
+]

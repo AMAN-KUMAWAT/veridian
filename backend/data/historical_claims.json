@@ -1,0 +1,5 @@
+[
+  {"year": 2021, "region": "California", "peril": "wildfire", "loss": 4200000},
+  {"year": 2022, "region": "Florida", "peril": "wind_storm", "loss": 9800000},
+  {"year": 2023, "region": "Texas", "peril": "flood", "loss": 3100000}
+]

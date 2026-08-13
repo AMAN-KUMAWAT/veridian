@@ -1,0 +1,138 @@
+{
+  "theme": "light",
+  "typography": {
+    "fonts": {
+      "heading": "Outfit",
+      "body": "IBM Plex Sans",
+      "mono": "JetBrains Mono"
+    },
+    "rules": [
+      "DO NOT use Inter, Roboto, or Open Sans for headings.",
+      "Headings (Size > 32px) MUST use tracking-tight.",
+      "Overlines/Labels MUST be Uppercase + Tiny (text-xs) + Wide Spacing (tracking-[0.2em]).",
+      "Use JetBrains Mono for all numeric data, tables, and metric summaries to enforce precision.",
+      "H1 ceiling is text-6xl. Do not exceed.",
+      "Use Outfit for a tech-startup feel, and IBM Plex Sans for body."
+    ]
+  },
+  "colors": {
+    "palette": {
+      "primary": "#0F2C4C",
+      "accent": "#0EA5A0",
+      "surface_tint": "#E6F7F5",
+      "success": "#22C55E",
+      "warning": "#F59E0B",
+      "danger": "#EF4444",
+      "text_dark": "#1F2937",
+      "background": "#F8FAFB",
+      "card": "#FFFFFF"
+    },
+    "rules": [
+      "Use 'Swiss & High-Contrast' Light Theme logic.",
+      "Deep Navy (#0F2C4C) is the primary structural color, replacing black for high-contrast headers, primary text, and borders.",
+      "Teal Accent (#0EA5A0) is ONLY for primary call-to-actions, buttons, and key interactive links. DO NOT use Teal for large background areas or dashboard panels.",
+      "Light Teal Tint (#E6F7F5) is strictly used as a soft background for elevated data cards or active states in sidebars.",
+      "No generic full-screen gradients. Focus on crisp solid colors with 1px borders."
+    ]
+  },
+  "grids": {
+    "marketing": "grid-cols-1 md:grid-cols-8 lg:grid-cols-12, wide gaps (gap-8 to gap-12), highly asymmetrical spans.",
+    "dashboard": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4, tight gaps (gap-4 or gap-6), dense data blocks."
+  },
+  "layouts": {
+    "marketing_page": {
+      "style": "Tetris Grid with Asymmetry",
+      "rules": [
+        "Avoid standard Bootstrap columns. Use overlapping elements.",
+        "Hero Image Overlay: bg-white/60 or gradient overlay over skyscrapers for a light, high-end corporate feel. Do not black out the image.",
+        "Generous spacing: p-12, p-16, p-24.",
+        "Use Glassmorphism (Crystal variant) for sticky headers: backdrop-blur-xl bg-white/70 with a 1px border-white/40."
+      ]
+    },
+    "dashboard": {
+      "style": "High Density Grid",
+      "rules": [
+        "Use tight gaps (gap-4 or gap-6).",
+        "Every pixel must be utilized (h-full on children).",
+        "Card Style: Flat background (#FFFFFF), 1px subtle border (#E5E7EB), no shadow by default. Hover adds shadow-sm and slightly darkens border.",
+        "Grid Borders (The Technical Look): Use border-collapse style layouts for dense data tables.",
+        "No Glassmorphism in health/finance apps like this one, except top nav."
+      ]
+    }
+  },
+  "visual_enhancers": {
+    "surfaces": [
+      "Neumorphism (Tactile) strictly forbidden.",
+      "Use Flat Solid surfaces for Data Dashboards to prevent visual refraction of data.",
+      "Use Glassmorphism strictly for the marketing page sticky header."
+    ],
+    "micro_interactions": [
+      "All interactive elements MUST have explicit hover states (e.g., hover:bg-slate-100 hover:text-[#0F2C4C]).",
+      "Buttons: slight lift (-translate-y-px) and shadow increase on hover.",
+      "Form inputs: focus:ring-2 focus:ring-[#0EA5A0] focus:outline-none."
+    ]
+  },
+  "components": {
+    "instructions_to_main_agent": [
+      "Prioritize using pre-existing components from src/components/ui.",
+      "For Marketing: Use pure HTML + Tailwind CSS for structure to achieve asymmetry, but Shadcn for interactive logic (Forms).",
+      "For Dashboard: Heavily rely on customized Shadcn components (Tables, Dropdowns, Tabs).",
+      "Do NOT use Shadcn Card for marketing layouts, use raw divs.",
+      "Toast: Use sonner.",
+      "LOGO CREATION: Manually create an SVG for the Veridian logo: a shield built from an interconnected node/circuit pattern forming a 'V' in negative space."
+    ]
+  },
+  "motion": {
+    "rules": [
+      "Marketing: Smooth scrolling (lenis), staggered entrances for grids.",
+      "Dashboard: Minimalist motion. Focus on micro-interactions for feedback.",
+      "NEVER apply universal transitions (transition: all). Use specific properties (transition-colors, transition-transform)."
+    ]
+  },
+  "accessibility": {
+    "rules": [
+      "Minimum 4.5:1 contrast for normal text.",
+      "All interactive elements MUST include a data-testid attribute in kebab-case, role-based (e.g., data-testid='submit-portfolio-button').",
+      "Respect prefers-reduced-motion."
+    ]
+  },
+  "media": {
+    "icons": {
+      "library": "lucide-react",
+      "rules": "Use Lucide React for consistent, clean tech icons. Stroke width 1.5 for elegance."
+    },
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1707365531261-f2bb8407adda?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjh8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBza3lzY3JhcGVycyUyMGZvZ3xlbnwwfHx8fDE3ODY2MDM1MTd8MA&ixlib=rb-4.1.0&q=85",
+        "category": "Hero Background",
+        "description": "Foggy modern skyscrapers to establish corporate reinsurance trust and scale on the marketing page."
+      },
+      {
+        "url": "https://images.pexels.com/photos/10325707/pexels-photo-10325707.png?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "category": "Data Processing Graphic",
+        "description": "Abstract data network for the 'Live SSE Processing' view or AI Insight Panel."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7",
+        "category": "Testimonial / Persona",
+        "description": "Professional businessman portrait for the dashboard user profile or a marketing page trust badge."
+      }
+    ]
+  },
+  "3d_libraries": {
+    "recommendation": "recharts",
+    "secondary": "react-globe.gl",
+    "rules": [
+      "Use Recharts for standard data visualization (Exposure charts, CAT Loss Model output).",
+      "Use react-globe.gl if building an immersive geographical risk map for the Portfolio-Wide view."
+    ]
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Do not converge toward generic outputs. Use deep Navy (#0F2C4C) and crisp White (#FFFFFF) to create sharp contrast.",
+    "Layered design elements with z-index hierarchy.",
+    "Do not center align the app container (.App { text-align: center; } is FORBIDDEN).",
+    "Never use AI assistant emojis.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Provide specific transitions, no 'transition: all'."
+  ]
+}

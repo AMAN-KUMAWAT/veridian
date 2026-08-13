@@ -1,0 +1,26 @@
+{
+  "summary": "Veridian full-stack testing complete. Backend: 17/17 pytest cases pass covering SSE submission pipeline (start->geocoding->risk_scoring->aggregation->natcat->persist->complete with full policy risk_scores + portfolio aggregates), Pydantic validation (year_built out-of-range, sum_insured<=0, empty policies, invalid email -> all 422), whitelist auth (non-whitelisted 403, whitelisted 200, wrong OTP 401, correct OTP -> cookie + authenticated), rate-limit 429 after 4 OTP requests, protected routes require cookie (401 -> 200), review updates status Reviewed/Flagged, portfolio/overview, AI insight Claude stream returns real text (>50 chars). Frontend Playwright: landing loads with Veridian branding; submit form validation for invalid email/year_built/sum_insured shows toasts and blocks submission; add/remove policy rows work; full SSE submission produced Reference ID VRD-1113E43A; login rejects non-whitelisted with toast, advances whitelisted email to OTP step; OTP read from backend log verified and redirects to /insights; dashboard loads submissions table + stat cards; row click opens submission detail; cession slider live-updates retained/ceded ($246,240 -> $430,920); reserve slider toggles breach flag; Generate recommendation streams 715 chars of Claude insight; Mark Reviewed and Flag both update status; logout redirects to /insights/login.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "OTP_STORE is in-memory dict; multi-worker deployments (gunicorn>1 worker) would break OTP verification. Fine for single-process supervisor setup used here.",
+    "submissions.json is read/written on every request under a single asyncio.Lock — this will not scale beyond low volume but is documented as MVP local-JSON storage.",
+    "verify-otp does not distinguish 'not requested' from 'wrong code' (both -> 401 invalid). Acceptable for security (no user enumeration).",
+    "AI insight streaming persists full text via update_submission at StreamDone; if client disconnects mid-stream the persisted ai_insight will be truncated. Consider using request.is_disconnected checks.",
+    "In Submit.jsx the `region` field is sent from client but ignored in scoring (server calls _derive_region); harmless but confusing — either use it or remove from payload."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (new)"
+  ],
+  "success_rate": {"backend": "100% (17/17)", "frontend": "100% (all critical flows)"},
+  "test_credentials": "Login (OTP whitelist): amankunawat4u@gmail.com, aman7339811186@gmail.com, amanbaba.kumawat@gmail.com. OTP read from /var/log/supervisor/backend.err.log '[OTP] Generated code for <email>: <code>'.",
+  "seed_data_creation": "Created 2 submissions via the pipeline during testing (VRD-<random> ids) with TEST_ prefixed submitter details. Persisted in /app/backend/data/submissions.json.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend pytest suite at /app/backend/tests/backend_test.py exercises 17 scenarios end-to-end via public REACT_APP_BACKEND_URL. OTP rate limit is 3 sends per whitelisted email per 10 min — use amanbaba.kumawat@gmail.com if amankunawat4u is rate-limited. If dashboard row count reads 0 in Playwright, wait for a specific `[data-testid=\"submission-row-<id>\"]` selector rather than counting immediately after the table renders (data is fetched async in useEffect)."
+}
