@@ -69,7 +69,11 @@ for raw in lines:
     if in_code:
         pdf.set_font("Courier", "", 8.5)
         pdf.set_text_color(*INK)
-        pdf.multi_cell(0, 4.6, "  " + line)
+        pdf.set_x(pdf.l_margin)
+        try:
+            pdf.multi_cell(0, 4.6, "  " + line)
+        except Exception:
+            pdf.multi_cell(0, 4.6, "  " + line, wrapmode="CHAR")
         continue
     if line.startswith("# "):
         pdf.ln(2)
@@ -88,18 +92,23 @@ for raw in lines:
         pdf.set_text_color(*NAVY)
         pdf.multi_cell(0, 6, line[4:])
     elif re.match(r"^\s*-\s+", line):
-        indent = (len(line) - len(line.lstrip())) 
+        indent = (len(line) - len(line.lstrip()))
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(*INK)
         text = re.sub(r"^\s*-\s+", "", line)
-        pdf.set_x(15 + (6 if indent >= 2 else 0))
-        pdf.multi_cell(0, 5.4, chr(149) + " " + text)
+        prefix = ("    " if indent >= 2 else "") + chr(149) + " "
+        pdf.set_x(pdf.l_margin)
+        pdf.multi_cell(0, 5.4, prefix + text)
     elif line.strip() == "":
         pdf.ln(2)
     else:
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(*INK)
-        pdf.multi_cell(0, 5.4, line)
+        pdf.set_x(pdf.l_margin)
+        try:
+            pdf.multi_cell(0, 5.4, line)
+        except Exception:
+            pdf.multi_cell(0, 5.4, line, wrapmode="CHAR")
 
 pdf.output(OUT)
 print("WROTE", OUT)
