@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogOut, Inbox, TrendingUp, AlertTriangle, Layers, ChevronRight } from "lucide-react";
+import { LogOut, Inbox, TrendingUp, AlertTriangle, Layers, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft } from "lucide-react";
 import { Wordmark } from "../components/Logo";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
@@ -9,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
 const fmt = (n) => "$" + Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
 const scoreColor = (s) => (s >= 60 ? "#EF4444" : s >= 40 ? "#F59E0B" : "#22C55E");
 const statusStyle = { Received: "bg-[#E6F7F5] text-[#0EA5A0]", Reviewed: "bg-green-50 text-[#22C55E]", Flagged: "bg-red-50 text-[#EF4444]" };
+const PAGE_SIZE = 15;
 
 export default function Dashboard() {
   const { email, logout } = useAuth();
@@ -16,6 +17,17 @@ export default function Dashboard() {
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const nav = useNavigate();
+
+  // filters
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("All");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [natMin, setNatMin] = useState(0);
+  const [natMax, setNatMax] = useState(100);
+  const [sortKey, setSortKey] = useState("created_at");
+  const [sortDir, setSortDir] = useState("desc");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     (async () => {
@@ -28,12 +40,52 @@ export default function Dashboard() {
 
   const doLogout = async () => { await logout(); nav("/insights/login"); };
 
+  const toggleSort = (key) => {
+    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+    setPage(1);
+  };
+
+  const filtered = useMemo(() => {
+    let rows = subs.filter((s) => {
+      const text = `${s.submission_id} ${s.submitter_name} ${s.submitter_email}`.toLowerCase();
+      if (q && !text.includes(q.toLowerCase())) return false;
+      if (status !== "All" && s.submission_status !== status) return false;
+      if (natMin > s.natcat_composite_score || s.natcat_composite_score > natMax) return false;
+      const d = new Date(s.created_at);
+      if (dateFrom && d < new Date(dateFrom)) return false;
+      if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
+      return true;
+    });
+    rows = [...rows].sort((a, b) => {
+      let av = a[sortKey], bv = b[sortKey];
+      if (sortKey === "created_at") { av = new Date(av); bv = new Date(bv); }
+      if (typeof av === "string") { av = av.toLowerCase(); bv = (bv || "").toLowerCase(); }
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+    return rows;
+  }, [subs, q, status, natMin, natMax, dateFrom, dateTo, sortKey, sortDir]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const stats = overview ? [
     { label: "Total submissions", value: overview.total_submissions, icon: Inbox, color: "#0EA5A0" },
     { label: "Exposure under mgmt", value: fmt(overview.total_exposure), icon: Layers, color: "#0F2C4C" },
     { label: "Avg NatCat score", value: overview.average_natcat_score, icon: TrendingUp, color: "#F59E0B" },
     { label: "Capital reserve breaches", value: overview.capital_reserve_breaches, icon: AlertTriangle, color: "#EF4444" },
   ] : [];
+
+  const SortHead = ({ label, k, align = "left" }) => (
+    <th className={`px-5 py-3 cursor-pointer select-none hover:text-[#0EA5A0] transition-colors text-${align}`}
+      onClick={() => toggleSort(k)} data-testid={`sort-${k}`}>
+      <span className="inline-flex items-center gap-1">{label}
+        {sortKey === k ? (sortDir === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} className="opacity-30" />}
+      </span>
+    </th>
+  );
 
   return (
     <div className="min-h-screen bg-[#F8FAFB]">
@@ -55,19 +107,49 @@ export default function Dashboard() {
         <h1 className="font-head font-bold tracking-tight text-3xl text-[#0F2C4C]">Insights Dashboard</h1>
 
         <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((s, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-              className="bg-white border border-[#E5E7EB] rounded-xl p-5 hover:shadow-sm transition-shadow" data-testid={`stat-${i}`}>
-              <s.icon size={20} style={{ color: s.color }} strokeWidth={1.5} />
-              <div className="mt-3 mono text-2xl font-bold text-[#0F2C4C]">{s.value}</div>
-              <div className="overline text-[#1F2937]/50 mt-1">{s.label}</div>
-            </motion.div>
-          ))}
+          {loading ? [0, 1, 2, 3].map((i) => <div key={i} className="h-[110px] rounded-xl bg-white border border-[#E5E7EB] animate-pulse" />)
+            : stats.map((s, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+                className="bg-white border border-[#E5E7EB] rounded-xl p-5 hover:shadow-sm transition-shadow" data-testid={`stat-${i}`}>
+                <s.icon size={20} style={{ color: s.color }} strokeWidth={1.5} />
+                <div className="mt-3 mono text-2xl font-bold text-[#0F2C4C]">{s.value}</div>
+                <div className="overline text-[#1F2937]/50 mt-1">{s.label}</div>
+              </motion.div>
+            ))}
         </div>
 
         <div className="mt-10 flex items-center gap-2">
           <Inbox size={20} className="text-[#0EA5A0]" strokeWidth={1.5} />
           <h2 className="font-head font-semibold text-xl text-[#0F2C4C]">Submissions Inbox</h2>
+        </div>
+
+        {/* Filters */}
+        <div className="mt-4 bg-white border border-[#E5E7EB] rounded-xl p-4 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0EA5A0]" />
+            <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} data-testid="inbox-search"
+              placeholder="Search ref, name or email" className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-[#E5E7EB] text-sm focus:ring-2 focus:ring-[#0EA5A0] focus:outline-none transition-colors" />
+          </div>
+          <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} data-testid="inbox-status-filter"
+            className="px-3 py-2.5 rounded-lg border border-[#E5E7EB] text-sm focus:ring-2 focus:ring-[#0EA5A0] focus:outline-none transition-colors">
+            {["All", "Received", "Reviewed", "Flagged"].map((s) => <option key={s}>{s}</option>)}
+          </select>
+          <div className="flex items-center gap-2">
+            <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} data-testid="inbox-date-from"
+              className="w-full px-2 py-2.5 rounded-lg border border-[#E5E7EB] text-xs focus:ring-2 focus:ring-[#0EA5A0] focus:outline-none" />
+            <span className="text-[#1F2937]/40 text-xs">to</span>
+            <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} data-testid="inbox-date-to"
+              className="w-full px-2 py-2.5 rounded-lg border border-[#E5E7EB] text-xs focus:ring-2 focus:ring-[#0EA5A0] focus:outline-none" />
+          </div>
+          <div>
+            <div className="flex justify-between overline text-[#1F2937]/60 mb-1"><span>NatCat range</span><span className="mono">{natMin}-{natMax}</span></div>
+            <div className="flex items-center gap-2">
+              <input type="range" min={0} max={100} value={natMin} data-testid="inbox-nat-min"
+                onChange={(e) => { setNatMin(Math.min(Number(e.target.value), natMax)); setPage(1); }} className="w-full accent-[#0EA5A0]" />
+              <input type="range" min={0} max={100} value={natMax} data-testid="inbox-nat-max"
+                onChange={(e) => { setNatMax(Math.max(Number(e.target.value), natMin)); setPage(1); }} className="w-full accent-[#0EA5A0]" />
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
@@ -76,41 +158,53 @@ export default function Dashboard() {
               <tr className="bg-[#F8FAFB] text-left overline text-[#1F2937]/50 border-b border-[#E5E7EB]">
                 <th className="px-5 py-3">Reference</th>
                 <th className="px-5 py-3">Submitter</th>
-                <th className="px-5 py-3 hidden md:table-cell">Date</th>
-                <th className="px-5 py-3 text-right">Sum Insured</th>
-                <th className="px-5 py-3 text-center">NatCat</th>
-                <th className="px-5 py-3">Status</th>
+                <SortHead label="Date" k="created_at" />
+                <SortHead label="Sum Insured" k="total_sum_insured" />
+                <SortHead label="NatCat" k="natcat_composite_score" />
+                <SortHead label="Status" k="submission_status" />
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={7} className="px-5 py-10 text-center text-[#1F2937]/50">Loading…</td></tr>}
-              {!loading && subs.length === 0 && (
-                <tr><td colSpan={7} className="px-5 py-12 text-center text-[#1F2937]/50">No submissions yet.</td></tr>
+              {loading && [...Array(5)].map((_, i) => (
+                <tr key={i} className="border-b border-[#F1F5F9]"><td colSpan={7} className="px-5 py-4">
+                  <div className="h-5 bg-[#F1F5F9] rounded animate-pulse" /></td></tr>
+              ))}
+              {!loading && pageRows.length === 0 && (
+                <tr><td colSpan={7} className="px-5 py-12 text-center text-[#1F2937]/50" data-testid="inbox-empty">No submissions match your filters</td></tr>
               )}
-              {subs.map((s) => (
+              {!loading && pageRows.map((s, idx) => (
                 <tr key={s.submission_id} onClick={() => nav(`/insights/submission/${s.submission_id}`)}
                   data-testid={`submission-row-${s.submission_id}`}
-                  className="border-b border-[#F1F5F9] hover:bg-[#E6F7F5]/40 cursor-pointer transition-colors">
+                  className={`border-b border-[#F1F5F9] hover:bg-[#E6F7F5]/50 cursor-pointer transition-colors ${idx % 2 ? "bg-[#F8FAFB]/60" : ""}`}>
                   <td className="px-5 py-4 mono font-medium text-[#0F2C4C]">{s.submission_id}</td>
                   <td className="px-5 py-4">
                     <div className="text-[#1F2937] font-medium">{s.submitter_name}</div>
                     <div className="text-xs text-[#1F2937]/50">{s.submitter_organization || `${s.policy_count} policies`}</div>
                   </td>
-                  <td className="px-5 py-4 hidden md:table-cell text-[#1F2937]/70 mono text-xs">{new Date(s.created_at).toLocaleDateString()}</td>
-                  <td className="px-5 py-4 text-right mono text-[#0F2C4C]">{fmt(s.total_sum_insured)}</td>
-                  <td className="px-5 py-4 text-center">
-                    <span className="mono font-bold" style={{ color: scoreColor(s.natcat_composite_score) }}>{s.natcat_composite_score}</span>
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusStyle[s.submission_status] || ""}`}>{s.submission_status}</span>
-                  </td>
+                  <td className="px-5 py-4 text-[#1F2937]/70 mono text-xs">{new Date(s.created_at).toLocaleDateString()}</td>
+                  <td className="px-5 py-4 mono text-[#0F2C4C]">{fmt(s.total_sum_insured)}</td>
+                  <td className="px-5 py-4"><span className="mono font-bold" style={{ color: scoreColor(s.natcat_composite_score) }}>{s.natcat_composite_score}</span></td>
+                  <td className="px-5 py-4"><span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusStyle[s.submission_status] || ""}`}>{s.submission_status}</span></td>
                   <td className="px-5 py-4 text-right"><ChevronRight size={16} className="text-[#0EA5A0]" /></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {!loading && filtered.length > 0 && (
+          <div className="mt-4 flex items-center justify-between text-sm text-[#1F2937]/70">
+            <span>Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} data-testid="page-prev"
+                className="p-2 rounded-lg border border-[#E5E7EB] disabled:opacity-40 hover:bg-white transition-colors"><ChevronLeft size={16} /></button>
+              <span className="mono">Page {page} / {pageCount}</span>
+              <button onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={page === pageCount} data-testid="page-next"
+                className="p-2 rounded-lg border border-[#E5E7EB] disabled:opacity-40 hover:bg-white transition-colors"><ChevronRight size={16} /></button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

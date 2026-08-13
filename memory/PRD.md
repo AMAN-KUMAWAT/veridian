@@ -1,36 +1,50 @@
-# Veridian — CAT Portfolio & Reinsurance Analytics (PRD)
+# Veridian — Product Requirements & Progress
 
-## Original Problem Statement
-Full-stack CAT (catastrophe) risk analytics platform for reinsurance decision support. Two areas:
-public Submission Portal (no login) + protected Insights Dashboard (real email-OTP auth, whitelist-only).
-Real external APIs for geocoding/seismic/wind; documented stubs for flood/wildfire/theft; Claude AI insight;
-Resend OTP email. Storage in local JSON files (no DB).
+## Problem statement
+Veridian is a Catastrophe (CAT) risk analytics platform for reinsurance decision support.
+Two areas: a public Submission Portal (no login) and a protected Insights Dashboard
+(real email-OTP auth, whitelist-restricted). Frontend React+Tailwind, backend FastAPI (async,
+Pydantic), storage = local JSON files (no DB). Real external APIs: Nominatim/Open-Meteo geocoding,
+USGS seismic, Open-Meteo wind. AI: Anthropic Claude (Emergent LLM key). Email/OTP: managed Resend.
 
-## Architecture (as built)
-- Frontend: React (CRA) + Tailwind (Next.js not available in platform runtime — adapted to React, same UX).
-- Backend: FastAPI async + Pydantic. Storage: /app/backend/data/submissions.json + historical_claims.json.
-- Auth: passwordless OTP -> JWT in httpOnly cookie `veridian_token`. Whitelist via WHITELIST_EMAILS env.
-- Integrations: Emergent-managed Resend (OTP email); Emergent LLM key -> Claude Sonnet 4.6 (AI insight).
-- Real APIs verified live: Nominatim (+Open-Meteo geocode fallback), USGS earthquakes, Open-Meteo archive wind.
-- Stubs (documented, deterministic 30-50): flood_risk, wildfire_risk, theft_risk. property_condition from age.
+## Architecture
+- Frontend: React (CRA) + Tailwind, Recharts, Framer Motion, lucide-react, sonner. Pages: Landing,
+  Submit, Login (OTP), Dashboard, SubmissionDetail, NotFound; global ErrorBoundary.
+- Backend: FastAPI /api routes. Auth via OTP -> JWT in httpOnly cookie. SSE-streamed pipeline.
+  PDF/CSV via fpdf2/csv. Data in backend/data/*.json.
 
-## Core Requirements (static)
-- Public: landing, multi-row policy submission form, live SSE processing, confirmation with reference ID.
-- Dashboard: OTP login (whitelist), submissions inbox, submission detail (exposure charts, per-policy risk),
-  Quota Share treaty simulator, capital reserve breach check, AI insight panel, review/flag, portfolio-wide view.
-- Validation both frontend + backend (email format, year 1800-now, sum_insured>0, >=1 policy).
+## User personas
+- Public submitter (broker/insurer): submits a book of business, gets a receipt. No results shown.
+- Authorized reviewer (underwriter, whitelisted email): reviews submissions, runs treaty/capital
+  analysis and AI insight, marks Reviewed/Flagged.
 
-## Implemented (2026-08-13)
-- All 8 build stages complete and verified. 17/17 backend pytest pass; all frontend critical flows pass.
-- Whitelist: aman7339811186@gmail.com, amankunawat4u@gmail.com, amanbaba.kumawat@gmail.com.
-- Pipeline SSE events: start, geocoding, risk_scoring, aggregation, natcat, persist, complete.
-- Treaty simulator implemented as Quota Share with attachment point; ceded premium loaded at 1.2x.
+## Core requirements (static)
+- Whitelist OTP auth; public submission portal; per-policy risk scoring (real APIs + documented
+  stubs); portfolio aggregation; NatCat composite; JSON persistence; reviewer analytics.
 
-## Backlog / Remaining (P1/P2)
-- P2: geographical risk map (react-globe.gl) for portfolio-wide view.
-- P2: CSV upload for bulk policy import.
-- P2: per-submission stored capital reserve (currently interactive-only; overview uses 15%-of-SI default model).
-- P1: request.is_disconnected guard on AI stream to avoid truncated persisted insight.
+## Implemented
+- 2026-08: MVP — public portal (landing/form/SSE processing/confirmation), OTP login (real email),
+  inbox + detail (exposure, loss model, treaty simulator, capital reserve, AI insight, review).
+  Pushed to GitHub (AMAN-KUMAWAT/veridian). Owner guide PDF generated.
+- 2026-08 (v6 upgrade):
+  - Section 1: per-policy security_features (8 booleans); security_risk = inverse of 7 features;
+    basement_present -> +15 flood_risk. UI 2-col checkbox grid.
+  - Section 2: full frontend (inline blur errors, disabled submit) + backend Pydantic validation.
+  - Section 3: submitter receipt PDF (no scores) + auto Resend email with PDF attachment.
+  - Section 4: inbox search, status/date/NatCat filters, sortable columns, pagination, empty state,
+    zebra rows, skeletons.
+  - Section 5: benchmark badge vs portfolio avg, data provenance tags (Live vs Modeled),
+    reviewer full report PDF + per-policy CSV, live retained/ceded stacked bar, action toasts.
+  - Section 6: risk integrity — per-address live seismic/wind (cached, logged raw), fallback tagged
+    Modeled; verified SF vs Miami differ (seismic 100 vs 0).
+  - Section 7: skeletons, favicon (shield), branded 404, ErrorBoundary, hover/focus states.
+  - OTP resilience: 429 from email provider no longer blocks login (code still valid).
+- Testing: iteration_2 — backend 25/25, frontend 100%, no bugs.
 
-## Test Credentials
-See /app/memory/test_credentials.md. OTP logged to backend logs for E2E testing.
+## Backlog (P1/P2)
+- P1: signed/expiring tokens or rate-limit on public receipt.pdf (id enumeration risk).
+- P2: persist OTP store outside process memory; align route naming to plural.
+- P2: real flood/wildfire/theft data source if a free API becomes available.
+
+## Next tasks
+- Optional: deploy + custom domain; push v6 to GitHub via Save to GitHub.

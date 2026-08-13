@@ -212,5 +212,919 @@
     "submission_status": "Flagged",
     "review_note": "",
     "ai_insight": ""
+  },
+  {
+    "submission_id": "VRD-3F1421B6",
+    "submitter_name": "aman kumawat",
+    "submitter_email": "amankunawat4u@gmail.com",
+    "submitter_organization": "",
+    "created_at": "2026-08-13T07:31:03.095442+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "c-7 sahakar nagar jhotwara jaipur",
+        "region": "c-7 sahakar nagar jhotwara jaipur",
+        "property_type": "residential",
+        "construction_type": "Concrete",
+        "year_built": 1993,
+        "sum_insured": 500000.0,
+        "peril_focus": "",
+        "lat": 39.5,
+        "lon": -98.35,
+        "risk_scores": {
+          "flood_risk": 40.0,
+          "seismic_risk": 54.0,
+          "wildfire_risk": 37.0,
+          "wind_storm_risk": 35.6,
+          "theft_risk": 50.0,
+          "property_condition": 29.7
+        },
+        "policy_composite": 41.1,
+        "expected_loss": 205500.0
+      }
+    ],
+    "total_sum_insured": 500000.0,
+    "aggregate_expected_loss": 205500.0,
+    "exposure_by_region": {
+      "c-7 sahakar nagar jhotwara jaipur": 500000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 40.0,
+      "seismic_risk": 54.0,
+      "wildfire_risk": 37.0,
+      "wind_storm_risk": 35.6,
+      "theft_risk": 50.0,
+      "property_condition": 29.7
+    },
+    "avg_scores": {
+      "flood_risk": 40.0,
+      "seismic_risk": 54.0,
+      "wildfire_risk": 37.0,
+      "wind_storm_risk": 35.6,
+      "theft_risk": 50.0,
+      "property_condition": 29.7
+    },
+    "natcat_composite_score": 41.1,
+    "submission_status": "Reviewed",
+    "review_note": "",
+    "ai_insight": "# CAT Portfolio Underwriting Analysis \u2014 Aman Kumawat\n\n---\n\n## (1) Dominant Perils Driving Loss\n\nWith an **Aggregate Expected CAT Loss of $205,500 against TSI of $500,000**, the loss-to-value ratio is an alarming **41.1%** \u2014 far exceeding acceptable thresholds for a single-policy exposure. The dominant perils are:\n\n- **Seismic Risk: 54.0/100** \u2014 Jaipur sits within **Seismic Zone II-III**; primary driver\n- **Theft Risk: 50.0/100** \u2014 elevated for urban Jhotwara locality\n- **Flood Risk: 40.0/100** \u2014 secondary but material given Sahakar Nagar drainage vulnerabilities\n\nProperty Condition score of **29.7/100** compounds all peril exposures \u2014 structural inadequacy amplifies seismic and flood severity materially.\n\n---\n\n## (2) Recommended Treaty Structure\n\n**Excess of Loss (XoL) \u2014 Risk XoL preferred over Quota Share.**\n\n- Suggest **retention: $50,000** with XoL cover up to **$450,000** (90% cession)\n- A Quota Share at 70\u201380% cession is a fallback but inefficient given the concentrated single-location risk\n\n---\n\n## (3) Capital-Adequacy Caution\n\n\u26a0\ufe0f A **41.1% expected loss ratio on a single-policy, single-location portfolio** constitutes severe capital concentration risk. With **zero geographic diversification**, a single seismic or flood event could render the net retained position ($50K) entirely exhausted. **Do not expand this portfolio without mandatory risk improvement surveys and mandatory property condition remediation to above 50/100.**"
+  },
+  {
+    "submission_id": "VRD-F0B0919A",
+    "submitter_name": "aman kumawat",
+    "submitter_email": "amankunawat4u@gmail.com",
+    "submitter_organization": "",
+    "created_at": "2026-08-13T07:39:19.498302+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "c-7 sahakar nagar jhotwara jaipur",
+        "region": "c-7 sahakar nagar jhotwara jaipur",
+        "property_type": "residential",
+        "construction_type": "Concrete",
+        "year_built": 2005,
+        "sum_insured": 500000.0,
+        "peril_focus": "",
+        "lat": 39.5,
+        "lon": -98.35,
+        "risk_scores": {
+          "flood_risk": 40.0,
+          "seismic_risk": 54.0,
+          "wildfire_risk": 37.0,
+          "wind_storm_risk": 35.6,
+          "theft_risk": 50.0,
+          "property_condition": 18.9
+        },
+        "policy_composite": 39.5,
+        "expected_loss": 197500.0
+      }
+    ],
+    "total_sum_insured": 500000.0,
+    "aggregate_expected_loss": 197500.0,
+    "exposure_by_region": {
+      "c-7 sahakar nagar jhotwara jaipur": 500000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 40.0,
+      "seismic_risk": 54.0,
+      "wildfire_risk": 37.0,
+      "wind_storm_risk": 35.6,
+      "theft_risk": 50.0,
+      "property_condition": 18.9
+    },
+    "avg_scores": {
+      "flood_risk": 40.0,
+      "seismic_risk": 54.0,
+      "wildfire_risk": 37.0,
+      "wind_storm_risk": 35.6,
+      "theft_risk": 50.0,
+      "property_condition": 18.9
+    },
+    "natcat_composite_score": 39.5,
+    "submission_status": "Received",
+    "review_note": "",
+    "ai_insight": ""
+  },
+  {
+    "submission_id": "VRD-22CF65F9",
+    "submitter_name": "Jane Broker",
+    "submitter_email": "amankunawat4u@gmail.com",
+    "submitter_organization": "Acme Re",
+    "created_at": "2026-08-13T07:55:53.029772+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "1600 Amphitheatre Parkway, Mountain View, CA",
+        "region": "Mountain View",
+        "property_type": "commercial",
+        "construction_type": "Concrete",
+        "year_built": 2010,
+        "sum_insured": 2500000.0,
+        "peril_focus": "",
+        "security_features": {
+          "alarm_system": true,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": true,
+          "gated_access": false,
+          "basement_present": true
+        },
+        "lat": 37.4224858,
+        "lon": -122.0855846,
+        "risk_scores": {
+          "flood_risk": 55.0,
+          "seismic_risk": 100.0,
+          "wildfire_risk": 47.0,
+          "wind_storm_risk": 40.7,
+          "theft_risk": 34.0,
+          "property_condition": 14.4,
+          "security_risk": 71.4
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 57.1,
+        "expected_loss": 1427500.0
+      },
+      {
+        "policy_id": "POL-002",
+        "address": "Miami Beach, FL",
+        "region": "Miami Beach",
+        "property_type": "residential",
+        "construction_type": "Wood",
+        "year_built": 1970,
+        "sum_insured": 900000.0,
+        "peril_focus": "",
+        "security_features": {
+          "alarm_system": false,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": false
+        },
+        "lat": 25.7929198,
+        "lon": -80.1353006,
+        "risk_scores": {
+          "flood_risk": 37.0,
+          "seismic_risk": 0.0,
+          "wildfire_risk": 37.0,
+          "wind_storm_risk": 39.3,
+          "theft_risk": 41.0,
+          "property_condition": 62.4,
+          "security_risk": 100.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 40.3,
+        "expected_loss": 362700.0
+      }
+    ],
+    "total_sum_insured": 3400000.0,
+    "aggregate_expected_loss": 1790200.0,
+    "exposure_by_region": {
+      "Mountain View": 2500000.0,
+      "Miami Beach": 900000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 50.2,
+      "seismic_risk": 73.5,
+      "wildfire_risk": 44.4,
+      "wind_storm_risk": 40.3,
+      "theft_risk": 35.9,
+      "property_condition": 27.1,
+      "security_risk": 79.0
+    },
+    "avg_scores": {
+      "flood_risk": 46.0,
+      "seismic_risk": 50.0,
+      "wildfire_risk": 42.0,
+      "wind_storm_risk": 40.0,
+      "theft_risk": 37.5,
+      "property_condition": 38.4,
+      "security_risk": 85.7
+    },
+    "natcat_composite_score": 48.7,
+    "submission_status": "Received",
+    "review_note": "",
+    "ai_insight": ""
+  },
+  {
+    "submission_id": "VRD-72BD60D9",
+    "submitter_name": "TEST_SFMiami",
+    "submitter_email": "TEST_sfmiami@example.com",
+    "submitter_organization": "",
+    "created_at": "2026-08-13T07:58:49.673618+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "500 Terry A Francois Blvd, San Francisco, CA",
+        "region": "San Francisco",
+        "property_type": "residential",
+        "construction_type": "concrete",
+        "year_built": 2000,
+        "sum_insured": 250000.0,
+        "peril_focus": "earthquake",
+        "security_features": {
+          "alarm_system": false,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": false
+        },
+        "lat": 37.7703501,
+        "lon": -122.3873489,
+        "risk_scores": {
+          "flood_risk": 39.0,
+          "seismic_risk": 100.0,
+          "wildfire_risk": 42.0,
+          "wind_storm_risk": 56.2,
+          "theft_risk": 41.0,
+          "property_condition": 23.4,
+          "security_risk": 100.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 61.3,
+        "expected_loss": 153250.0
+      },
+      {
+        "policy_id": "POL-002",
+        "address": "1000 Ocean Dr, Miami Beach, FL",
+        "region": "Miami Beach",
+        "property_type": "residential",
+        "construction_type": "concrete",
+        "year_built": 2000,
+        "sum_insured": 250000.0,
+        "peril_focus": "wind",
+        "security_features": {
+          "alarm_system": false,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": false
+        },
+        "lat": 25.780654,
+        "lon": -80.130681,
+        "risk_scores": {
+          "flood_risk": 37.0,
+          "seismic_risk": 0.0,
+          "wildfire_risk": 41.0,
+          "wind_storm_risk": 40.9,
+          "theft_risk": 38.0,
+          "property_condition": 23.4,
+          "security_risk": 100.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 35.9,
+        "expected_loss": 89750.0
+      }
+    ],
+    "total_sum_insured": 500000.0,
+    "aggregate_expected_loss": 243000.0,
+    "exposure_by_region": {
+      "San Francisco": 250000.0,
+      "Miami Beach": 250000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 38.0,
+      "seismic_risk": 50.0,
+      "wildfire_risk": 41.5,
+      "wind_storm_risk": 48.5,
+      "theft_risk": 39.5,
+      "property_condition": 23.4,
+      "security_risk": 100.0
+    },
+    "avg_scores": {
+      "flood_risk": 38.0,
+      "seismic_risk": 50.0,
+      "wildfire_risk": 41.5,
+      "wind_storm_risk": 48.5,
+      "theft_risk": 39.5,
+      "property_condition": 23.4,
+      "security_risk": 100.0
+    },
+    "natcat_composite_score": 48.6,
+    "submission_status": "Received",
+    "review_note": "",
+    "ai_insight": ""
+  },
+  {
+    "submission_id": "VRD-9AA55012",
+    "submitter_name": "TEST_sec",
+    "submitter_email": "TEST_sec@example.com",
+    "submitter_organization": "",
+    "created_at": "2026-08-13T07:58:55.367974+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "10 Elm St, Boise, ID",
+        "region": "Boise",
+        "property_type": "residential",
+        "construction_type": "wood",
+        "year_built": 2000,
+        "sum_insured": 250000.0,
+        "peril_focus": "",
+        "security_features": {
+          "alarm_system": true,
+          "security_cameras": true,
+          "smart_home_security": true,
+          "fire_sprinklers": true,
+          "fire_extinguishers": true,
+          "smoke_detectors": true,
+          "gated_access": true,
+          "basement_present": false
+        },
+        "lat": 43.6806359,
+        "lon": -116.2878005,
+        "risk_scores": {
+          "flood_risk": 34.0,
+          "seismic_risk": 19.2,
+          "wildfire_risk": 42.0,
+          "wind_storm_risk": 33.9,
+          "theft_risk": 45.0,
+          "property_condition": 35.4,
+          "security_risk": 0.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 28.3,
+        "expected_loss": 70750.0
+      },
+      {
+        "policy_id": "POL-002",
+        "address": "10 Elm St, Boise, ID",
+        "region": "Boise",
+        "property_type": "residential",
+        "construction_type": "wood",
+        "year_built": 2000,
+        "sum_insured": 250000.0,
+        "peril_focus": "",
+        "security_features": {
+          "alarm_system": false,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": false
+        },
+        "lat": 43.6806359,
+        "lon": -116.2878005,
+        "risk_scores": {
+          "flood_risk": 34.0,
+          "seismic_risk": 19.2,
+          "wildfire_risk": 42.0,
+          "wind_storm_risk": 33.9,
+          "theft_risk": 45.0,
+          "property_condition": 35.4,
+          "security_risk": 100.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 40.3,
+        "expected_loss": 100750.0
+      }
+    ],
+    "total_sum_insured": 500000.0,
+    "aggregate_expected_loss": 171500.0,
+    "exposure_by_region": {
+      "Boise": 500000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 34.0,
+      "seismic_risk": 19.2,
+      "wildfire_risk": 42.0,
+      "wind_storm_risk": 33.9,
+      "theft_risk": 45.0,
+      "property_condition": 35.4,
+      "security_risk": 50.0
+    },
+    "avg_scores": {
+      "flood_risk": 34.0,
+      "seismic_risk": 19.2,
+      "wildfire_risk": 42.0,
+      "wind_storm_risk": 33.9,
+      "theft_risk": 45.0,
+      "property_condition": 35.4,
+      "security_risk": 50.0
+    },
+    "natcat_composite_score": 34.3,
+    "submission_status": "Received",
+    "review_note": "",
+    "ai_insight": ""
+  },
+  {
+    "submission_id": "VRD-10C4E7DB",
+    "submitter_name": "TEST_base",
+    "submitter_email": "TEST_base@example.com",
+    "submitter_organization": "",
+    "created_at": "2026-08-13T07:58:58.085458+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "20 Oak Ave, Dallas, TX",
+        "region": "Dallas",
+        "property_type": "residential",
+        "construction_type": "wood",
+        "year_built": 2000,
+        "sum_insured": 250000.0,
+        "peril_focus": "",
+        "security_features": {
+          "alarm_system": false,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": true
+        },
+        "lat": 32.6858098,
+        "lon": -96.5722736,
+        "risk_scores": {
+          "flood_risk": 59.0,
+          "seismic_risk": 18.0,
+          "wildfire_risk": 33.0,
+          "wind_storm_risk": 36.8,
+          "theft_risk": 47.0,
+          "property_condition": 35.4,
+          "security_risk": 100.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 44.0,
+        "expected_loss": 110000.0
+      },
+      {
+        "policy_id": "POL-002",
+        "address": "20 Oak Ave, Dallas, TX",
+        "region": "Dallas",
+        "property_type": "residential",
+        "construction_type": "wood",
+        "year_built": 2000,
+        "sum_insured": 250000.0,
+        "peril_focus": "",
+        "security_features": {
+          "alarm_system": false,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": false
+        },
+        "lat": 32.6858098,
+        "lon": -96.5722736,
+        "risk_scores": {
+          "flood_risk": 44.0,
+          "seismic_risk": 18.0,
+          "wildfire_risk": 33.0,
+          "wind_storm_risk": 36.8,
+          "theft_risk": 47.0,
+          "property_condition": 35.4,
+          "security_risk": 100.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 41.3,
+        "expected_loss": 103250.0
+      }
+    ],
+    "total_sum_insured": 500000.0,
+    "aggregate_expected_loss": 213250.0,
+    "exposure_by_region": {
+      "Dallas": 500000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 51.5,
+      "seismic_risk": 18.0,
+      "wildfire_risk": 33.0,
+      "wind_storm_risk": 36.8,
+      "theft_risk": 47.0,
+      "property_condition": 35.4,
+      "security_risk": 100.0
+    },
+    "avg_scores": {
+      "flood_risk": 51.5,
+      "seismic_risk": 18.0,
+      "wildfire_risk": 33.0,
+      "wind_storm_risk": 36.8,
+      "theft_risk": 47.0,
+      "property_condition": 35.4,
+      "security_risk": 100.0
+    },
+    "natcat_composite_score": 42.6,
+    "submission_status": "Received",
+    "review_note": "",
+    "ai_insight": ""
+  },
+  {
+    "submission_id": "VRD-11A6D6AF",
+    "submitter_name": "Test User",
+    "submitter_email": "TEST_user@example.com",
+    "submitter_organization": "TEST Org",
+    "created_at": "2026-08-13T07:59:12.725505+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "1600 Amphitheatre Parkway, Mountain View, CA",
+        "region": "Mountain View",
+        "property_type": "commercial",
+        "construction_type": "concrete",
+        "year_built": 2005,
+        "sum_insured": 5000000.0,
+        "peril_focus": "earthquake",
+        "security_features": {
+          "alarm_system": false,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": false
+        },
+        "lat": 37.4224858,
+        "lon": -122.0855846,
+        "risk_scores": {
+          "flood_risk": 40.0,
+          "seismic_risk": 100.0,
+          "wildfire_risk": 47.0,
+          "wind_storm_risk": 40.7,
+          "theft_risk": 34.0,
+          "property_condition": 18.9,
+          "security_risk": 100.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 58.5,
+        "expected_loss": 2925000.0
+      },
+      {
+        "policy_id": "POL-002",
+        "address": "350 5th Ave, New York, NY",
+        "region": "New York",
+        "property_type": "commercial",
+        "construction_type": "steel",
+        "year_built": 1931,
+        "sum_insured": 12000000.0,
+        "peril_focus": "wind",
+        "security_features": {
+          "alarm_system": false,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": false
+        },
+        "lat": 40.7484421,
+        "lon": -73.9856589,
+        "risk_scores": {
+          "flood_risk": 40.0,
+          "seismic_risk": 4.8,
+          "wildfire_risk": 34.0,
+          "wind_storm_risk": 44.6,
+          "theft_risk": 37.0,
+          "property_condition": 85.5,
+          "security_risk": 100.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 45.3,
+        "expected_loss": 5436000.0
+      }
+    ],
+    "total_sum_insured": 17000000.0,
+    "aggregate_expected_loss": 8361000.0,
+    "exposure_by_region": {
+      "Mountain View": 5000000.0,
+      "New York": 12000000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 40.0,
+      "seismic_risk": 32.8,
+      "wildfire_risk": 37.8,
+      "wind_storm_risk": 43.5,
+      "theft_risk": 36.1,
+      "property_condition": 65.9,
+      "security_risk": 100.0
+    },
+    "avg_scores": {
+      "flood_risk": 40.0,
+      "seismic_risk": 52.4,
+      "wildfire_risk": 40.5,
+      "wind_storm_risk": 42.7,
+      "theft_risk": 35.5,
+      "property_condition": 52.2,
+      "security_risk": 100.0
+    },
+    "natcat_composite_score": 51.9,
+    "submission_status": "Flagged",
+    "review_note": "TEST flag",
+    "ai_insight": "## CAT Portfolio Underwriting Assessment \u2014 TEST Org\n\n---\n\n### (1) Dominant Perils Driving Loss\n\nWith an aggregate expected CAT loss of **$8,361,000 against $17,000,000 TSI (49.2% loss ratio)**, this portfolio is severely stressed. **Seismic risk (52.4)** and **property condition (52.2)** are the primary structural concerns, amplified by a critical **security risk score of 100.0** \u2014 an absolute outlier demanding immediate risk audit. The **$12,000,000 New York concentration (70.6% of TSI)** elevates wind/storm and flood accumulation risk materially, while the **$5,000,000 Mountain View exposure** carries elevated seismic vulnerability.\n\n---\n\n### (2) Recommended Treaty Structure\n\n**Reject quota share** at standard terms \u2014 a 49.2% aggregate loss ratio makes this unattractive to capacity providers without punitive pricing. Recommend a **Per-Risk XoL structure with an aggregate corridor**, retaining the first **$500,000 per occurrence**, with cession layers covering **$500,000 xs $500,000 up to $5,000,000**, targeting a **65\u201375% cession rate** to shed peak accumulation. Reinstatement provisions should be capped at **one paid reinstatement**.\n\n---\n\n### (3) Capital-Adequacy Caution\n\nThe **$8,361,000 expected loss against $17,000,000 TSI leaves virtually zero margin for adverse development**. With only 2 policies, a single large event breaches **49% of total exposed capital** \u2014 concentration risk is existential. Immediate PML stress-testing at **1-in-100 and 1-in-250 return periods is mandatory** before binding any treaty."
+  },
+  {
+    "submission_id": "VRD-98C1052B",
+    "submitter_name": "TEST_SFMiami",
+    "submitter_email": "TEST_sfmiami@example.com",
+    "submitter_organization": "",
+    "created_at": "2026-08-13T07:59:29.113641+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "500 Terry A Francois Blvd, San Francisco, CA",
+        "region": "San Francisco",
+        "property_type": "residential",
+        "construction_type": "concrete",
+        "year_built": 2000,
+        "sum_insured": 250000.0,
+        "peril_focus": "earthquake",
+        "security_features": {
+          "alarm_system": false,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": false
+        },
+        "lat": 37.7703501,
+        "lon": -122.3873489,
+        "risk_scores": {
+          "flood_risk": 39.0,
+          "seismic_risk": 100.0,
+          "wildfire_risk": 42.0,
+          "wind_storm_risk": 56.2,
+          "theft_risk": 41.0,
+          "property_condition": 23.4,
+          "security_risk": 100.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 61.3,
+        "expected_loss": 153250.0
+      },
+      {
+        "policy_id": "POL-002",
+        "address": "1000 Ocean Dr, Miami Beach, FL",
+        "region": "Miami Beach",
+        "property_type": "residential",
+        "construction_type": "concrete",
+        "year_built": 2000,
+        "sum_insured": 250000.0,
+        "peril_focus": "wind",
+        "security_features": {
+          "alarm_system": false,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": false
+        },
+        "lat": 25.780654,
+        "lon": -80.130681,
+        "risk_scores": {
+          "flood_risk": 37.0,
+          "seismic_risk": 0.0,
+          "wildfire_risk": 41.0,
+          "wind_storm_risk": 40.9,
+          "theft_risk": 38.0,
+          "property_condition": 23.4,
+          "security_risk": 100.0
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 35.9,
+        "expected_loss": 89750.0
+      }
+    ],
+    "total_sum_insured": 500000.0,
+    "aggregate_expected_loss": 243000.0,
+    "exposure_by_region": {
+      "San Francisco": 250000.0,
+      "Miami Beach": 250000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 38.0,
+      "seismic_risk": 50.0,
+      "wildfire_risk": 41.5,
+      "wind_storm_risk": 48.5,
+      "theft_risk": 39.5,
+      "property_condition": 23.4,
+      "security_risk": 100.0
+    },
+    "avg_scores": {
+      "flood_risk": 38.0,
+      "seismic_risk": 50.0,
+      "wildfire_risk": 41.5,
+      "wind_storm_risk": 48.5,
+      "theft_risk": 39.5,
+      "property_condition": 23.4,
+      "security_risk": 100.0
+    },
+    "natcat_composite_score": 48.6,
+    "submission_status": "Flagged",
+    "review_note": "",
+    "ai_insight": ""
+  },
+  {
+    "submission_id": "VRD-103B524C",
+    "submitter_name": "Test User",
+    "submitter_email": "test@example.com",
+    "submitter_organization": "",
+    "created_at": "2026-08-13T08:01:38.961661+00:00",
+    "policies": [
+      {
+        "policy_id": "POL-001",
+        "address": "500 Terry A Francois Blvd, San Francisco, CA",
+        "region": "San Francisco",
+        "property_type": "residential",
+        "construction_type": "Concrete",
+        "year_built": 2010,
+        "sum_insured": 1000000.0,
+        "peril_focus": "",
+        "security_features": {
+          "alarm_system": true,
+          "security_cameras": false,
+          "smart_home_security": false,
+          "fire_sprinklers": false,
+          "fire_extinguishers": false,
+          "smoke_detectors": false,
+          "gated_access": false,
+          "basement_present": true
+        },
+        "lat": 37.7703501,
+        "lon": -122.3873489,
+        "risk_scores": {
+          "flood_risk": 54.0,
+          "seismic_risk": 100.0,
+          "wildfire_risk": 42.0,
+          "wind_storm_risk": 56.2,
+          "theft_risk": 41.0,
+          "property_condition": 14.4,
+          "security_risk": 85.7
+        },
+        "data_sources": {
+          "flood_risk": "modeled",
+          "seismic_risk": "live",
+          "wildfire_risk": "modeled",
+          "wind_storm_risk": "live",
+          "theft_risk": "modeled",
+          "property_condition": "modeled",
+          "security_risk": "modeled"
+        },
+        "policy_composite": 61.1,
+        "expected_loss": 611000.0
+      }
+    ],
+    "total_sum_insured": 1000000.0,
+    "aggregate_expected_loss": 611000.0,
+    "exposure_by_region": {
+      "San Francisco": 1000000.0
+    },
+    "exposure_by_peril": {
+      "flood_risk": 54.0,
+      "seismic_risk": 100.0,
+      "wildfire_risk": 42.0,
+      "wind_storm_risk": 56.2,
+      "theft_risk": 41.0,
+      "property_condition": 14.4,
+      "security_risk": 85.7
+    },
+    "avg_scores": {
+      "flood_risk": 54.0,
+      "seismic_risk": 100.0,
+      "wildfire_risk": 42.0,
+      "wind_storm_risk": 56.2,
+      "theft_risk": 41.0,
+      "property_condition": 14.4,
+      "security_risk": 85.7
+    },
+    "natcat_composite_score": 61.1,
+    "submission_status": "Received",
+    "review_note": "",
+    "ai_insight": ""
   }
 ]

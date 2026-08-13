@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { ArrowLeft, Sparkles, CheckCircle2, Flag, Loader2, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Sparkles, CheckCircle2, Flag, Loader2, ShieldAlert, ShieldCheck, FileDown, Table2, Radio, Cpu } from "lucide-react";
 import { Wordmark } from "../components/Logo";
 import { api, API } from "../lib/api";
 
 const fmt = (n) => "$" + Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
 const scoreColor = (s) => (s >= 60 ? "#EF4444" : s >= 40 ? "#F59E0B" : "#22C55E");
-const PERIL_LABEL = { flood_risk: "Flood", seismic_risk: "Seismic", wildfire_risk: "Wildfire", wind_storm_risk: "Wind/Storm", theft_risk: "Theft", property_condition: "Property Cond." };
+const PERIL_LABEL = { flood_risk: "Flood", seismic_risk: "Seismic", wildfire_risk: "Wildfire", wind_storm_risk: "Wind/Storm", theft_risk: "Theft", property_condition: "Property Cond.", security_risk: "Security" };
 
 export default function SubmissionDetail() {
   const { id } = useParams();
@@ -18,7 +18,6 @@ export default function SubmissionDetail() {
   const [insight, setInsight] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
 
-  // treaty simulator + capital reserve state
   const [cession, setCession] = useState(40);
   const [attachment, setAttachment] = useState(0);
   const [reserve, setReserve] = useState(0);
@@ -39,8 +38,30 @@ export default function SubmissionDetail() {
   const loss = rec?.aggregate_expected_loss || 0;
   const ceded = useMemo(() => Math.max(0, loss - attachment) * (cession / 100), [loss, attachment, cession]);
   const retained = loss - ceded;
-  const cededPremium = ceded * 1.2; // loaded premium estimate
+  const cededPremium = ceded * 1.2;
   const breach = retained > reserve && reserve > 0;
+  const cededPct = loss > 0 ? (ceded / loss) * 100 : 0;
+
+  const benchmark = useMemo(() => {
+    if (!rec) return null;
+    const avg = rec.portfolio_avg_natcat || 0;
+    if (!avg) return null;
+    const diff = rec.natcat_composite_score - avg;
+    const pct = Math.round((Math.abs(diff) / avg) * 100);
+    if (Math.abs(diff) < 0.5) return { text: "At portfolio average", color: "#6B7280", bg: "#F1F5F9" };
+    return diff > 0
+      ? { text: `${pct}% above portfolio average`, color: "#EF4444", bg: "#FEF2F2" }
+      : { text: `${pct}% below average exposure`, color: "#22C55E", bg: "#F0FDF4" };
+  }, [rec]);
+
+  const provenance = useMemo(() => {
+    if (!rec) return {};
+    const map = {};
+    for (const k of Object.keys(PERIL_LABEL)) {
+      map[k] = rec.policies.some((p) => (p.data_sources || {})[k] === "live") ? "live" : "modeled";
+    }
+    return map;
+  }, [rec]);
 
   const regionData = rec ? Object.entries(rec.exposure_by_region).map(([name, v]) => ({ name, value: v })) : [];
   const perilData = rec ? Object.entries(rec.avg_scores).map(([k, v]) => ({ name: PERIL_LABEL[k], value: v })) : [];
@@ -49,7 +70,7 @@ export default function SubmissionDetail() {
     try {
       await api.post(`/submissions/${id}/review`, { status, note });
       setRec({ ...rec, submission_status: status, review_note: note });
-      toast.success(`Marked as ${status}`);
+      toast.success(`Submission marked as ${status}`);
     } catch { toast.error("Update failed"); }
   };
 
@@ -65,10 +86,23 @@ export default function SubmissionDetail() {
         if (done) break;
         setInsight((p) => p + decoder.decode(value, { stream: true }));
       }
+      toast.success("AI recommendation generated");
     } catch { toast.error("Could not generate insight"); } finally { setAiBusy(false); }
   };
 
-  if (!rec) return <div className="min-h-screen flex items-center justify-center text-[#0F2C4C]">Loading…</div>;
+  const reportUrl = `${API}/submissions/${id}/report.pdf?cession=${cession}&attachment=${Math.round(attachment)}&reserve=${Math.round(reserve)}`;
+  const csvUrl = `${API}/submissions/${id}/policies.csv`;
+
+  if (!rec) return (
+    <div className="min-h-screen bg-[#F8FAFB]">
+      <div className="bg-[#0F2C4C] h-16" />
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-4" data-testid="detail-skeleton">
+        <div className="h-10 w-1/3 bg-white rounded-lg animate-pulse" />
+        <div className="grid grid-cols-4 gap-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-24 bg-white rounded-xl animate-pulse" />)}</div>
+        <div className="grid lg:grid-cols-2 gap-6">{[0, 1].map((i) => <div key={i} className="h-64 bg-white rounded-xl animate-pulse" />)}</div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#F8FAFB]">
@@ -88,19 +122,35 @@ export default function SubmissionDetail() {
             <h1 className="font-head font-bold tracking-tight text-3xl text-[#0F2C4C]">{rec.submitter_organization || rec.submitter_name}</h1>
             <p className="text-sm text-[#1F2937]/60 mt-1">{rec.submitter_name} · {rec.submitter_email} · {rec.policies.length} policies</p>
           </div>
-          <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-[#E6F7F5] text-[#0EA5A0]" data-testid="detail-status">{rec.submission_status}</span>
+          <div className="flex items-center gap-3">
+            <a href={reportUrl} target="_blank" rel="noreferrer" data-testid="export-report-button"
+              className="px-4 py-2 rounded-full bg-[#0F2C4C] text-white text-sm font-medium flex items-center gap-2 hover:-translate-y-px hover:shadow-lg transition-transform">
+              <FileDown size={15} /> Export Full Report (PDF)
+            </a>
+            <a href={csvUrl} target="_blank" rel="noreferrer" data-testid="export-csv-button"
+              className="px-4 py-2 rounded-full border border-[#0F2C4C]/20 text-[#0F2C4C] text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors">
+              <Table2 size={15} /> Per-Policy CSV
+            </a>
+          </div>
         </div>
 
         {/* Top metrics */}
         <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Metric label="Total Sum Insured" value={fmt(rec.total_sum_insured)} />
           <Metric label="Aggregate Expected CAT Loss" value={fmt(rec.aggregate_expected_loss)} accent="#EF4444" />
-          <Metric label="NatCat Composite" value={rec.natcat_composite_score} accent={scoreColor(rec.natcat_composite_score)} />
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
+            <div className="mono text-2xl font-bold" style={{ color: scoreColor(rec.natcat_composite_score) }}>{rec.natcat_composite_score}</div>
+            <div className="overline text-[#1F2937]/50 mt-1">NatCat Composite</div>
+            {benchmark && (
+              <span className="inline-block mt-2 text-xs font-medium px-2 py-1 rounded-full" style={{ color: benchmark.color, background: benchmark.bg }} data-testid="benchmark-badge">
+                {benchmark.text}
+              </span>
+            )}
+          </div>
           <Metric label="Regions" value={Object.keys(rec.exposure_by_region).length} />
         </div>
 
         <div className="mt-6 grid lg:grid-cols-2 gap-6">
-          {/* Exposure by region */}
           <Panel title="Portfolio Exposure — by Region">
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={regionData} layout="vertical" margin={{ left: 10 }}>
@@ -112,11 +162,10 @@ export default function SubmissionDetail() {
             </ResponsiveContainer>
           </Panel>
 
-          {/* Avg peril scores */}
           <Panel title="Average Peril Risk Scores">
-            <ResponsiveContainer width="100%" height={240}>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={perilData} margin={{ top: 10 }}>
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-15} textAnchor="end" height={50} />
+                <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} angle={-20} textAnchor="end" height={54} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                 <Tooltip />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
@@ -124,6 +173,14 @@ export default function SubmissionDetail() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-3 flex flex-wrap gap-2" data-testid="provenance-tags">
+              {Object.entries(PERIL_LABEL).map(([k, label]) => (
+                <span key={k} className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full ${provenance[k] === "live" ? "bg-[#E6F7F5] text-[#0EA5A0]" : "bg-[#F1F5F9] text-[#6B7280]"}`}>
+                  {provenance[k] === "live" ? <Radio size={10} /> : <Cpu size={10} />}
+                  {label}: {provenance[k] === "live" ? "Live data" : "Modeled estimate"}
+                </span>
+              ))}
+            </div>
           </Panel>
         </div>
 
@@ -133,7 +190,19 @@ export default function SubmissionDetail() {
             <div className="space-y-5">
               <Slider label="Cession %" value={cession} min={0} max={100} step={5} onChange={setCession} display={`${cession}%`} testid="cession-slider" />
               <Slider label="Attachment Point (retention floor)" value={attachment} min={0} max={Math.max(1, Math.round(loss))} step={1000} onChange={setAttachment} display={fmt(attachment)} testid="attachment-slider" />
-              <div className="grid grid-cols-3 gap-3 pt-2">
+              {/* live stacked bar */}
+              <div>
+                <div className="flex justify-between overline text-[#1F2937]/60 mb-1"><span>Retained vs Ceded</span></div>
+                <div className="h-7 w-full rounded-lg overflow-hidden flex bg-[#F1F5F9]" data-testid="treaty-bar">
+                  <div className="h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-300" style={{ width: `${100 - cededPct}%`, background: "#0F2C4C" }}>
+                    {100 - cededPct > 12 ? "Retained" : ""}
+                  </div>
+                  <div className="h-full flex items-center justify-center text-[10px] font-bold text-white transition-all duration-300" style={{ width: `${cededPct}%`, background: "#0EA5A0" }}>
+                    {cededPct > 12 ? "Ceded" : ""}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 pt-1">
                 <MiniStat label="Retained Loss" value={fmt(retained)} color="#0F2C4C" testid="retained-loss" />
                 <MiniStat label="Ceded Loss" value={fmt(ceded)} color="#0EA5A0" testid="ceded-loss" />
                 <MiniStat label="Ceded Premium (est.)" value={fmt(cededPremium)} color="#F59E0B" testid="ceded-premium" />
@@ -186,8 +255,8 @@ export default function SubmissionDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rec.policies.map((p) => (
-                    <tr key={p.policy_id} className="border-b border-[#F1F5F9] hover:bg-[#F8FAFB]">
+                  {rec.policies.map((p, idx) => (
+                    <tr key={p.policy_id} className={`border-b border-[#F1F5F9] hover:bg-[#E6F7F5]/40 transition-colors ${idx % 2 ? "bg-[#F8FAFB]/60" : ""}`}>
                       <td className="px-3 py-2.5 mono text-[#0F2C4C]">{p.policy_id}</td>
                       <td className="px-3 py-2.5 text-[#1F2937]/70 max-w-[180px] truncate">{p.address}</td>
                       <td className="px-3 py-2.5 text-right mono">{fmt(p.sum_insured)}</td>
@@ -248,8 +317,7 @@ const Slider = ({ label, value, min, max, step, onChange, display, testid }) => 
       <span className="mono text-sm font-bold text-[#0F2C4C]">{display}</span>
     </div>
     <input type="range" min={min} max={max} step={step} value={value} data-testid={testid}
-      onChange={(e) => onChange(Number(e.target.value))}
-      className="w-full accent-[#0EA5A0] cursor-pointer" />
+      onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-[#0EA5A0] cursor-pointer" />
   </div>
 );
 

@@ -1,0 +1,31 @@
+{
+  "summary": "Veridian v6 upgrade end-to-end testing. NEW pytest file /app/backend/tests/test_v6_upgrade.py (10/10 pass) covering: (a) SF vs Miami live data - seismic_risk differs (100 vs 0) and wind_storm_risk differs (56.2 vs 40.9) with data_sources tagged 'live' for seismic/wind and 'modeled' for flood/wildfire/theft/security/property_condition; (b) security_features wiring - all 7 booleans TRUE -> security_risk=0.0 vs FALSE -> security_risk=100.0; (c) basement_present:true adds exactly +15 to flood_risk vs same address without basement; (d) receipt.pdf is PUBLIC (no auth), Content-Type application/pdf, raw bytes contain no 'seismic_risk'/'natcat'/'policy_composite'/'expected_loss' leakage; (e) report.pdf and policies.csv return 401 without cookie and 200 with cookie (CSV headers include seismic_risk/wind_storm_risk/policy_composite); (f) portfolio_avg_natcat included on /submissions/{id}; (g) empty address rejected 422. Existing 15-case backend_test.py continues to pass. Frontend Playwright: Submit form - button disabled until all valid, invalid email/year/sum show inline red errors on blur (data-testid *-error), 8 security checkboxes render in 2-col grid (policy-{i}-{key}), add/remove policy up to 20 works, full submission streams processing then confirmation with Reference ID VRD-103B524C, 'emailed to test@example.com' text and download-receipt-button visible. Dashboard (authenticated via injected veridian_token cookie because upstream Resend email service was returning 429 during test - see env note below): 12 rows visible, inbox-search unmatched shows inbox-empty, sort-natcat_composite_score/sort-total_sum_insured clicks re-order rows, status filter dropdown works, nat-min slider adjusts. Detail (VRD-98C1052B): benchmark-badge shows '5% above portfolio average', provenance-tags contains both 'Live' (seismic/wind) and 'Modeled' (others), treaty-bar has 2 segments (Retained/Ceded), reserve-flag visible in breached (red) state, export-report-button href includes report.pdf, export-csv-button href includes policies.csv, generate-insight-button streams a real Claude recommendation (>150 chars visible, full paragraphs on screen), mark-reviewed and mark-flagged both fire sonner toasts ('Submission marked as Flagged' captured). Unknown route /does-not-exist-xyz renders branded 404 page.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_v6_upgrade.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/v6_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "OTP delivery path: when Resend email API returns 429 (rate-limited), /api/auth/request-otp raises HTTPException 502 even though the OTP has already been generated and stored in memory. Because the frontend depends on request-otp returning 200 to advance to the OTP-entry step, UI login is effectively blocked during upstream email throttling. Consider (a) returning 200 with a 'delivery may be delayed' notice while the OTP is still stored, or (b) surfacing a clearer client-side retry state — otherwise a legitimate user cannot log in when Resend rate-limits, even though the backend is healthy.",
+    "OTP_STORE is process-local in-memory dict; any restart or multi-worker deploy breaks verification. Acceptable for MVP but worth flagging for productionization.",
+    "receipt.pdf endpoint is unauthenticated by design and correctly excludes scores, but note that submission IDs are 8-char hex — an attacker could brute-force ~16.7M ids to enumerate portfolios' policy metadata (addresses, sums insured). Consider adding per-submission signed download tokens or rate limiting on /receipt.pdf.",
+    "Route mismatch worth documenting: App.js uses '/insights/submission/:id' (singular) while some code paths might use 'submissions' - the current wiring works but is inconsistent with the REST API path /api/submissions/{id}. Consider aligning to plural for readability."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_v6_upgrade.py (new)"
+  ],
+  "success_rate": {"backend": "100% (10/10 v6 + 15/15 baseline)", "frontend": "100% (all v6 critical flows verified)"},
+  "test_credentials": "OTP whitelist: amankunawat4u@gmail.com, aman7339811186@gmail.com, amanbaba.kumawat@gmail.com. OTP codes are logged at INFO in /var/log/supervisor/backend.err.log as '[OTP] Generated code for <email>: NNNNNN'. During testing the Resend email integration was returning 429; verify-otp was called with the logged code to obtain the veridian_token cookie directly (curl-based).",
+  "seed_data_creation": "Created 5+ TEST_-prefixed submissions during pipeline testing (VRD-98C1052B SFMiami, VRD-10C4E7DB TEST_base, VRD-9AA55012 TEST_sec, VRD-103B524C via UI, plus baseline test data). Persisted to /app/backend/data/submissions.json.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "v6 backend tests live in /app/backend/tests/test_v6_upgrade.py — run with `pytest backend/tests/test_v6_upgrade.py -v -o addopts=''` (pytest.ini enables xdist which fights the module-scoped sf_miami_submission fixture; disabling addopts serializes correctly). Frontend detail route is /insights/submission/:id (singular). When Resend rate-limits, get an auth cookie by (1) POST /api/auth/request-otp to log an OTP, (2) tail backend.err.log for the code, (3) POST /api/auth/verify-otp with that code — the cookie can then be injected into Playwright via page.context.add_cookies with domain=veridian-submission.preview.emergentagent.com, httpOnly=True, secure=True, sameSite='None'. Playwright range-input .evaluate() dispatching input/change events did not re-render the React treaty-bar; use page.locator(cession_slider).fill('75') instead (verified working in iteration_1).",
+  "rca of the issue": "No product bugs found in v6 upgrade. The only environmental friction was upstream Resend email service returning 429 during testing, which surfaces as a 502 from /api/auth/request-otp — user impact noted under critical_code_review_comments."
+}

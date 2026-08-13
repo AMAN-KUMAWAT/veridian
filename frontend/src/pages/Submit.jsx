@@ -1,52 +1,84 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Plus, Trash2, ArrowLeft, CheckCircle2, Loader2, Building2 } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, CheckCircle2, Loader2, Building2, ShieldCheck, Download, Mail } from "lucide-react";
 import { Wordmark } from "../components/Logo";
 import { API } from "../lib/api";
 
+const emptySecurity = () => ({
+  alarm_system: false, security_cameras: false, smart_home_security: false,
+  fire_sprinklers: false, fire_extinguishers: false, smoke_detectors: false,
+  gated_access: false, basement_present: false,
+});
 const emptyPolicy = () => ({
   address: "", property_type: "residential", construction_type: "Concrete",
   year_built: 2005, sum_insured: 500000, region: "", peril_focus: "",
+  security_features: emptySecurity(),
 });
 
 const PROP_TYPES = ["residential", "commercial", "industrial", "mixed-use"];
 const CONSTRUCTION = ["Concrete", "Steel", "Masonry", "Wood", "Mixed"];
+const SECURITY_FIELDS = [
+  ["alarm_system", "Alarm system"], ["security_cameras", "Security cameras"],
+  ["smart_home_security", "Smart home security"], ["fire_sprinklers", "Fire sprinklers"],
+  ["fire_extinguishers", "Fire extinguishers"], ["smoke_detectors", "Smoke detectors"],
+  ["gated_access", "Gated access"], ["basement_present", "Basement present"],
+];
 const YEAR_NOW = new Date().getFullYear();
+const emailOk = (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
 
 export default function Submit() {
-  const [stage, setStage] = useState("form"); // form | processing | done
+  const [stage, setStage] = useState("form");
   const [submitter, setSubmitter] = useState({ submitter_name: "", submitter_email: "", submitter_organization: "" });
   const [policies, setPolicies] = useState([emptyPolicy()]);
   const [events, setEvents] = useState([]);
   const [refId, setRefId] = useState("");
+  const [errors, setErrors] = useState({});
 
   const updatePolicy = (i, field, val) => {
-    const next = [...policies];
-    next[i][field] = val;
-    setPolicies(next);
+    const next = [...policies]; next[i][field] = val; setPolicies(next);
+  };
+  const toggleSecurity = (i, key) => {
+    const next = [...policies]; next[i].security_features[key] = !next[i].security_features[key]; setPolicies(next);
   };
   const addPolicy = () => { if (policies.length < 20) setPolicies([...policies, emptyPolicy()]); };
   const removePolicy = (i) => setPolicies(policies.filter((_, idx) => idx !== i));
 
-  const validate = () => {
-    if (!submitter.submitter_name.trim()) return "Submitter name is required";
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(submitter.submitter_email)) return "Valid submitter email required";
-    for (const [i, p] of policies.entries()) {
-      if (!p.address.trim()) return `Policy ${i + 1}: address required`;
-      if (!p.construction_type) return `Policy ${i + 1}: construction type required`;
-      if (p.year_built < 1800 || p.year_built > YEAR_NOW) return `Policy ${i + 1}: year built 1800–${YEAR_NOW}`;
-      if (Number(p.sum_insured) <= 0) return `Policy ${i + 1}: sum insured must be > 0`;
+  const fieldError = (key, val, pIdx = null) => {
+    if (key === "submitter_name") return !String(val).trim() ? "Name is required" : "";
+    if (key === "submitter_email") return !emailOk(val) ? "Enter a valid email" : "";
+    if (key === "address") return String(val).trim().length < 3 ? "Address is required" : "";
+    if (key === "construction_type") return !val ? "Required" : "";
+    if (key === "year_built") {
+      const y = Number(val);
+      if (!Number.isInteger(y) || y < 1800 || y > YEAR_NOW) return `1800-${YEAR_NOW}`;
+      return "";
     }
-    return null;
+    if (key === "sum_insured") return Number(val) > 0 ? "" : "Must be > 0";
+    return "";
   };
 
+  const blur = (key, val, pIdx = null) => {
+    const ek = pIdx === null ? key : `p${pIdx}_${key}`;
+    setErrors((prev) => ({ ...prev, [ek]: fieldError(key, val, pIdx) }));
+  };
+
+  const formValid = useMemo(() => {
+    if (fieldError("submitter_name", submitter.submitter_name)) return false;
+    if (fieldError("submitter_email", submitter.submitter_email)) return false;
+    for (const p of policies) {
+      if (fieldError("address", p.address)) return false;
+      if (fieldError("construction_type", p.construction_type)) return false;
+      if (fieldError("year_built", p.year_built)) return false;
+      if (fieldError("sum_insured", p.sum_insured)) return false;
+    }
+    return true;
+  }, [submitter, policies]);
+
   const submit = async () => {
-    const err = validate();
-    if (err) { toast.error(err); return; }
-    setStage("processing");
-    setEvents([]);
+    if (!formValid) { toast.error("Please fix the highlighted fields"); return; }
+    setStage("processing"); setEvents([]);
     const payload = {
       ...submitter,
       policies: policies.map((p) => ({ ...p, year_built: Number(p.year_built), sum_insured: Number(p.sum_insured) })),
@@ -101,12 +133,14 @@ export default function Submit() {
             <div className="mt-10 bg-white border border-[#E5E7EB] rounded-2xl p-8">
               <h2 className="font-head font-semibold text-lg text-[#0F2C4C] mb-5">Submitter details</h2>
               <div className="grid sm:grid-cols-3 gap-5">
-                <Field label="Full name *" testid="submitter-name"
-                  value={submitter.submitter_name} onChange={(v) => setSubmitter({ ...submitter, submitter_name: v })} />
-                <Field label="Email *" testid="submitter-email" type="email"
-                  value={submitter.submitter_email} onChange={(v) => setSubmitter({ ...submitter, submitter_email: v })} />
-                <Field label="Organization" testid="submitter-org"
-                  value={submitter.submitter_organization} onChange={(v) => setSubmitter({ ...submitter, submitter_organization: v })} />
+                <Field label="Full name *" testid="submitter-name" value={submitter.submitter_name}
+                  onChange={(v) => setSubmitter({ ...submitter, submitter_name: v })}
+                  onBlur={(v) => blur("submitter_name", v)} error={errors.submitter_name} />
+                <Field label="Email *" testid="submitter-email" type="email" value={submitter.submitter_email}
+                  onChange={(v) => setSubmitter({ ...submitter, submitter_email: v })}
+                  onBlur={(v) => blur("submitter_email", v)} error={errors.submitter_email} />
+                <Field label="Organization" testid="submitter-org" value={submitter.submitter_organization}
+                  onChange={(v) => setSubmitter({ ...submitter, submitter_organization: v })} />
               </div>
             </div>
 
@@ -132,28 +166,48 @@ export default function Submit() {
                   </div>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-3">
-                      <Field label="Property address *" testid={`policy-address-${i}`}
-                        value={p.address} onChange={(v) => updatePolicy(i, "address", v)} placeholder="e.g. 1600 Amphitheatre Pkwy, Mountain View, CA" />
+                      <Field label="Property address *" testid={`policy-address-${i}`} value={p.address}
+                        onChange={(v) => updatePolicy(i, "address", v)} onBlur={(v) => blur("address", v, i)}
+                        error={errors[`p${i}_address`]} placeholder="e.g. 1600 Amphitheatre Pkwy, Mountain View, CA" />
                     </div>
                     <Select label="Property type *" testid={`policy-type-${i}`} options={PROP_TYPES}
                       value={p.property_type} onChange={(v) => updatePolicy(i, "property_type", v)} />
                     <Select label="Construction *" testid={`policy-construction-${i}`} options={CONSTRUCTION}
                       value={p.construction_type} onChange={(v) => updatePolicy(i, "construction_type", v)} />
-                    <Field label="Year built *" testid={`policy-year-${i}`} type="number"
-                      value={p.year_built} onChange={(v) => updatePolicy(i, "year_built", v)} />
-                    <Field label="Sum insured (USD) *" testid={`policy-sum-${i}`} type="number"
-                      value={p.sum_insured} onChange={(v) => updatePolicy(i, "sum_insured", v)} />
-                    <Field label="Peril focus (optional)" testid={`policy-peril-${i}`}
-                      value={p.peril_focus} onChange={(v) => updatePolicy(i, "peril_focus", v)} placeholder="e.g. flood-prone" />
+                    <Field label="Year built *" testid={`policy-year-${i}`} type="number" value={p.year_built}
+                      onChange={(v) => updatePolicy(i, "year_built", v)} onBlur={(v) => blur("year_built", v, i)}
+                      error={errors[`p${i}_year_built`]} />
+                    <Field label="Sum insured (USD) *" testid={`policy-sum-${i}`} type="number" value={p.sum_insured}
+                      onChange={(v) => updatePolicy(i, "sum_insured", v)} onBlur={(v) => blur("sum_insured", v, i)}
+                      error={errors[`p${i}_sum_insured`]} />
+                    <Field label="Peril focus (optional)" testid={`policy-peril-${i}`} value={p.peril_focus}
+                      onChange={(v) => updatePolicy(i, "peril_focus", v)} placeholder="e.g. flood-prone" />
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-[#F1F5F9]">
+                    <div className="overline text-[#1F2937]/60 flex items-center gap-1.5 mb-3">
+                      <ShieldCheck size={14} className="text-[#0EA5A0]" /> Security & risk features
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
+                      {SECURITY_FIELDS.map(([key, label]) => (
+                        <label key={key} className="flex items-center gap-2.5 text-sm text-[#1F2937] cursor-pointer select-none">
+                          <input type="checkbox" checked={p.security_features[key]}
+                            onChange={() => toggleSecurity(i, key)} data-testid={`policy-${i}-${key}`}
+                            className="w-4 h-4 accent-[#0EA5A0] cursor-pointer" />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <button onClick={submit} data-testid="submit-portfolio-button"
-              className="mt-8 px-8 py-4 rounded-full bg-[#0EA5A0] text-white font-medium hover:-translate-y-px hover:shadow-xl transition-transform">
+            <button onClick={submit} data-testid="submit-portfolio-button" disabled={!formValid}
+              className="mt-8 px-8 py-4 rounded-full bg-[#0EA5A0] text-white font-medium hover:-translate-y-px hover:shadow-xl transition-transform disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:cursor-not-allowed">
               Run Risk Analysis
             </button>
+            {!formValid && <p className="mt-3 text-sm text-[#1F2937]/50">Complete all required (*) fields to enable analysis.</p>}
           </div>
         )}
 
@@ -184,14 +238,19 @@ export default function Submit() {
               <CheckCircle2 size={44} className="text-[#22C55E]" strokeWidth={1.5} />
             </div>
             <h1 className="font-head font-bold tracking-tight text-3xl text-[#0F2C4C]">Submission received</h1>
-            <p className="mt-4 text-[#1F2937]/80">
-              An authorized reviewer will assess your portfolio. Keep this reference for your records.
+            <p className="mt-4 text-[#1F2937]/80 flex items-center justify-center gap-1.5">
+              <Mail size={16} className="text-[#0EA5A0]" /> A copy has been emailed to {submitter.submitter_email}
             </p>
             <div className="mt-6 inline-block bg-white border border-[#0EA5A0]/30 rounded-xl px-8 py-5">
               <div className="overline text-[#0EA5A0] mb-1">Reference ID</div>
               <div className="mono text-2xl font-bold text-[#0F2C4C]" data-testid="reference-id">{refId}</div>
             </div>
-            <div className="mt-10">
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+              <a href={`${API}/submissions/${refId}/receipt.pdf`} target="_blank" rel="noreferrer"
+                data-testid="download-receipt-button"
+                className="px-6 py-3 rounded-full bg-[#0EA5A0] text-white font-medium flex items-center gap-2 hover:-translate-y-px hover:shadow-lg transition-transform">
+                <Download size={17} /> Download Submission Receipt
+              </a>
               <Link to="/" className="px-6 py-3 rounded-full border border-[#0F2C4C]/20 text-[#0F2C4C] font-medium hover:bg-white transition-colors">
                 Back to home
               </Link>
@@ -203,12 +262,13 @@ export default function Submit() {
   );
 }
 
-const Field = ({ label, value, onChange, type = "text", testid, placeholder }) => (
+const Field = ({ label, value, onChange, onBlur, error, type = "text", testid, placeholder }) => (
   <label className="block">
     <span className="overline text-[#1F2937]/60 block mb-1.5">{label}</span>
     <input type={type} value={value} placeholder={placeholder} data-testid={testid}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E7EB] bg-white text-[#1F2937] text-sm focus:ring-2 focus:ring-[#0EA5A0] focus:outline-none focus:border-[#0EA5A0] transition-colors" />
+      onChange={(e) => onChange(e.target.value)} onBlur={onBlur ? (e) => onBlur(e.target.value) : undefined}
+      className={`w-full px-3.5 py-2.5 rounded-lg border bg-white text-[#1F2937] text-sm focus:ring-2 focus:outline-none transition-colors ${error ? "border-[#EF4444] focus:ring-[#EF4444]/40" : "border-[#E5E7EB] focus:ring-[#0EA5A0] focus:border-[#0EA5A0]"}`} />
+    {error && <span className="text-xs text-[#EF4444] mt-1 block" data-testid={`${testid}-error`}>{error}</span>}
   </label>
 );
 
