@@ -17,6 +17,7 @@ export default function SubmissionDetail() {
   const nav = useNavigate();
   const { email } = useAuth();
   const [rec, setRec] = useState(null);
+  const [reviewers, setReviewers] = useState([]);
   const [note, setNote] = useState("");
   const [insight, setInsight] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
@@ -30,6 +31,7 @@ export default function SubmissionDetail() {
       try {
         const { data } = await api.get(`/submissions/${id}`);
         setRec(data);
+        api.get("/reviewers").then((r) => setReviewers(r.data.reviewers || [])).catch(() => {});
         setNote(data.review_note || "");
         setInsight(data.ai_insight || "");
         setAttachment(Math.round(data.aggregate_expected_loss * 0.2));
@@ -104,6 +106,16 @@ export default function SubmissionDetail() {
     } catch (e) { toast.error(e.response?.data?.detail || "Action failed"); }
   };
 
+  const reassign = async (to) => {
+    if (!to || to === rec.assigned_to) return;
+    try {
+      const { data } = await api.post(`/submissions/${id}/reassign`, { to });
+      setRec({ ...rec, assigned_to: data.assigned_to,
+        activity: [...(rec.activity || []), { action: "reassigned", label: `Reassigned to ${to}`, by: email, at: new Date().toISOString() }] });
+      toast.success(`Reassigned to ${to}`);
+    } catch (e) { toast.error(e.response?.data?.detail || "Reassign failed"); }
+  };
+
   const reportUrl = `${API}/submissions/${id}/report.pdf?cession=${cession}&attachment=${Math.round(attachment)}&reserve=${Math.round(reserve)}`;
   const csvUrl = `${API}/submissions/${id}/policies.csv`;
 
@@ -138,10 +150,17 @@ export default function SubmissionDetail() {
           </div>
           <div className="flex items-center gap-3">
             {rec.assigned_to ? (
+              <>
               <span className="px-3 py-2 rounded-full bg-[#E6F7F5] text-[#0EA5A0] text-xs font-medium flex items-center gap-1.5" data-testid="assignee-badge">
                 <UserCheck size={14} /> {rec.assigned_to === email ? "Handled by you" : `Handled by ${rec.assigned_to}`}
                 {rec.assigned_to === email && <button onClick={() => claim("release")} data-testid="release-button" className="ml-1 text-[#0F2C4C]/60 hover:text-[#EF4444] underline">release</button>}
               </span>
+              <select value="" onChange={(e) => reassign(e.target.value)} data-testid="reassign-select"
+                className="px-3 py-2 rounded-full border border-[#E5E7EB] text-xs text-[#0F2C4C] bg-white focus:ring-2 focus:ring-[#0EA5A0] focus:outline-none">
+                <option value="">Reassign to…</option>
+                {reviewers.filter((r) => r !== rec.assigned_to).map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+              </>
             ) : (
               <button onClick={() => claim("claim")} data-testid="claim-button"
                 className="px-4 py-2 rounded-full border border-[#0EA5A0] text-[#0EA5A0] text-sm font-medium flex items-center gap-2 hover:bg-[#E6F7F5] transition-colors">

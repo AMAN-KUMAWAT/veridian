@@ -6,3 +6,10 @@ crons:
     method: POST
     # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
     enabled: true
+  - name: weekly-portfolio-summary
+    description: "Hourly check that emails reviewers a weekly portfolio summary on their chosen weekday/hour"
+    cron: "0 * * * *"
+    endpoint: "{{BASE_URL}}/api/cron/weekly"
+    method: POST
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    enabled: true

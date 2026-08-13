@@ -102,7 +102,7 @@ async def update_submission(submission_id: str, patch: dict):
 
 
 PREFS_FILE = DATA_DIR / "reviewer_prefs.json"
-DEFAULT_PREFS = {"digest_enabled": True, "digest_hour": 8}
+DEFAULT_PREFS = {"digest_enabled": True, "digest_hour": 8, "weekly_enabled": False, "weekly_day": 0}
 
 
 def get_prefs(email: str) -> dict:
@@ -768,6 +768,8 @@ async def me(email: str = Depends(require_auth)):
 class SettingsUpdate(BaseModel):
     digest_enabled: bool
     digest_hour: int
+    weekly_enabled: bool = False
+    weekly_day: int = 0
 
     @field_validator("digest_hour")
     @classmethod
@@ -775,6 +777,17 @@ class SettingsUpdate(BaseModel):
         if v < 0 or v > 23:
             raise ValueError("digest_hour must be 0-23")
         return v
+
+    @field_validator("weekly_day")
+    @classmethod
+    def _wd(cls, v):
+        if v < 0 or v > 6:
+            raise ValueError("weekly_day must be 0-6 (Mon-Sun)")
+        return v
+
+
+class ReassignUpdate(BaseModel):
+    to: EmailStr
 
 
 @api.get("/settings")
@@ -784,7 +797,20 @@ async def get_settings(email: str = Depends(require_auth)):
 
 @api.put("/settings")
 async def put_settings(body: SettingsUpdate, email: str = Depends(require_auth)):
-    return set_prefs(email, {"digest_enabled": body.digest_enabled, "digest_hour": body.digest_hour})
+    return set_prefs(email, {"digest_enabled": body.digest_enabled, "digest_hour": body.digest_hour,
+                             "weekly_enabled": body.weekly_enabled, "weekly_day": body.weekly_day})
+
+
+@api.get("/reviewers")
+async def list_reviewers(email: str = Depends(require_auth)):
+    return {"reviewers": WHITELIST}
+
+
+@api.post("/settings/test-digest")
+async def test_digest(email: str = Depends(require_auth)):
+    # Preview: send the digest to just the requesting reviewer, ignoring prefs/hour.
+    asyncio.create_task(_send_digest(only=[email]))
+    return {"status": "sent", "to": email}
 
 
 # ----------------------------- Dashboard endpoints (protected) -----------------------------
@@ -850,6 +876,23 @@ async def claim_submission(submission_id: str, body: ClaimUpdate, email: str = D
     await update_submission(submission_id, {"assigned_to": email, "activity": activity})
     asyncio.create_task(send_assignment_email(rec, email))
     return {"assigned_to": email}
+
+
+@api.post("/submissions/{submission_id}/reassign")
+async def reassign_submission(submission_id: str, body: ReassignUpdate, email: str = Depends(require_auth)):
+    target = body.to.lower()
+    if target not in WHITELIST:
+        raise HTTPException(status_code=400, detail="Target is not an authorized reviewer")
+    data = await read_submissions()
+    rec = next((r for r in data if r["submission_id"] == submission_id), None)
+    if not rec:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    activity = rec.get("activity", [])
+    activity.append({"action": "reassigned", "label": f"Reassigned to {target}", "by": email,
+                     "at": datetime.now(timezone.utc).isoformat()})
+    await update_submission(submission_id, {"assigned_to": target, "activity": activity})
+    asyncio.create_task(send_assignment_email(rec, target))
+    return {"assigned_to": target}
 
 
 @api.get("/portfolio/map")
@@ -944,7 +987,7 @@ async def portfolio_overview(email: str = Depends(require_auth)):
     }
 
 
-async def _send_digest(target_hour=None):
+async def _send_digest(target_hour=None, only=None):
     try:
         data = await read_submissions()
         pending = [r for r in data if r.get("submission_status") == "Received"]
@@ -963,14 +1006,17 @@ async def _send_digest(target_hour=None):
         inner = (f"<h2 style='color:#0F2C4C;margin:0 0 6px;font-size:19px'>Daily review digest</h2>"
                  f"<p style='color:#1F2937;font-size:14px;margin:0 0 4px'><b style='color:#0EA5A0'>{len(pending)}</b> submission(s) awaiting review.</p>{table}"
                  f"<div style='text-align:center;margin-top:22px'><a href='{PUBLIC_APP_URL}/insights' style='background:#0EA5A0;color:#FFFFFF;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:bold;font-size:14px;display:inline-block'>Open Insights Dashboard</a></div>")
-        recipients = []
-        for reviewer in WHITELIST:
-            p = get_prefs(reviewer)
-            if not p.get("digest_enabled", True):
-                continue
-            if target_hour is not None and int(p.get("digest_hour", 8)) != target_hour:
-                continue
-            recipients.append(reviewer)
+        if only is not None:
+            recipients = only
+        else:
+            recipients = []
+            for reviewer in WHITELIST:
+                p = get_prefs(reviewer)
+                if not p.get("digest_enabled", True):
+                    continue
+                if target_hour is not None and int(p.get("digest_hour", 8)) != target_hour:
+                    continue
+                recipients.append(reviewer)
         for reviewer in recipients:
             try:
                 await _post_email({"to": [reviewer],
@@ -992,6 +1038,62 @@ async def cron_digest(authorization: str = Header(default=""), force: bool = Fal
     current_hour = None if force else datetime.now(timezone.utc).hour
     asyncio.create_task(_send_digest(current_hour))
     return {"status": "accepted", "hour": current_hour}
+
+
+async def _send_weekly(target_weekday=None, target_hour=None):
+    try:
+        data = await read_submissions()
+        total = len(data)
+        exposure = sum(r["total_sum_insured"] for r in data)
+        avg_nat = round(sum(r["natcat_composite_score"] for r in data) / total, 1) if total else 0
+        breaches = sum(1 for r in data if r["aggregate_expected_loss"] > 0.15 * r["total_sum_insured"])
+        top = sorted(data, key=lambda r: r["natcat_composite_score"], reverse=True)[:5]
+        rows = "".join(
+            f"<tr><td style='padding:6px;border-bottom:1px solid #EEF1F4;font-size:13px'><b>{r['submission_id']}</b></td>"
+            f"<td style='padding:6px;border-bottom:1px solid #EEF1F4;font-size:13px'>{r['submitter_name']}</td>"
+            f"<td style='padding:6px;border-bottom:1px solid #EEF1F4;font-size:13px;text-align:center'>{r['natcat_composite_score']}</td></tr>"
+            for r in top)
+        inner = (f"<h2 style='color:#0F2C4C;margin:0 0 6px;font-size:19px'>Weekly portfolio summary</h2>"
+                 f"<ul style='color:#1F2937;font-size:14px;padding-left:18px'>"
+                 f"<li>Total submissions: <b>{total}</b></li>"
+                 f"<li>Exposure under management: <b>${exposure:,.0f}</b></li>"
+                 f"<li>Average NatCat score: <b>{avg_nat}</b></li>"
+                 f"<li>Capital-reserve breaches: <b>{breaches}</b></li></ul>"
+                 f"<p style='color:#1F2937;font-size:13px;margin-top:8px'>Highest-exposure submissions:</p>"
+                 f"<table role='presentation' width='100%' style='border-collapse:collapse;border:1px solid #EEF1F4;border-radius:8px;overflow:hidden'>"
+                 f"<tr style='background:#E6F7F5;color:#0F2C4C'><th style='text-align:left;padding:8px 6px;font-size:12px'>Reference</th><th style='text-align:left;padding:8px 6px;font-size:12px'>Submitter</th><th style='text-align:center;padding:8px 6px;font-size:12px'>NatCat</th></tr>{rows}</table>"
+                 f"<div style='text-align:center;margin-top:22px'><a href='{PUBLIC_APP_URL}/insights' style='background:#0EA5A0;color:#FFFFFF;text-decoration:none;padding:12px 24px;border-radius:999px;font-weight:bold;font-size:14px;display:inline-block'>Open Insights Dashboard</a></div>")
+        recipients = []
+        for reviewer in WHITELIST:
+            p = get_prefs(reviewer)
+            if not p.get("weekly_enabled", False):
+                continue
+            if target_weekday is not None and int(p.get("weekly_day", 0)) != target_weekday:
+                continue
+            if target_hour is not None and int(p.get("digest_hour", 8)) != target_hour:
+                continue
+            recipients.append(reviewer)
+        for reviewer in recipients:
+            try:
+                await _post_email({"to": [reviewer], "subject": "Veridian - Weekly portfolio summary",
+                                   "html": _email_shell(inner), "from_name": EMAIL_FROM_NAME})
+            except Exception as e:
+                logger.warning(f"[WEEKLY] send to {reviewer} failed: {e}")
+        logger.info(f"[WEEKLY] dispatched to {len(recipients)} reviewers (day={target_weekday}, hour={target_hour})")
+    except Exception as e:
+        logger.error(f"[WEEKLY] failed: {e}")
+
+
+@api.post("/cron/weekly")
+async def cron_weekly(authorization: str = Header(default=""), force: bool = False):
+    expected = f"Bearer {WEBHOOK_CRON_SECRET}"
+    if not WEBHOOK_CRON_SECRET or not hmac.compare_digest(authorization, expected):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    now = datetime.now(timezone.utc)
+    wd = None if force else now.weekday()
+    hr = None if force else now.hour
+    asyncio.create_task(_send_weekly(wd, hr))
+    return {"status": "accepted", "weekday": wd, "hour": hr}
 
 
 @api.get("/")

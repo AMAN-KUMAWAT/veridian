@@ -1,6 +1,8 @@
 {
   "amankunawat4u@gmail.com": {
     "digest_enabled": true,
-    "digest_hour": 14
+    "digest_hour": 8,
+    "weekly_enabled": true,
+    "weekly_day": 2
   }
 }

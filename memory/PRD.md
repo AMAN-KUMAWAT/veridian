@@ -72,6 +72,13 @@ USGS seismic, Open-Meteo wind. AI: Anthropic Claude (Emergent LLM key). Email/OT
   - Testing: iteration_6 both new features + regression pass (assignee-filter fix confirmed); only a
     Playwright select flake noted (backend PUT + toggle persistence proven).
 
+- 2026-08 (v10 enhancements):
+  - Digest Test Send: POST /api/settings/test-digest (_send_digest only=[caller]); "Send me a test digest now" button on Settings.
+  - Cluster Legend note: dashboard heatmap note explaining cluster color = average composite risk.
+  - Reassign Submission: POST /api/submissions/{id}/reassign (+ GET /api/reviewers); detail "Reassign to…" dropdown; emails new reviewer; activity trail "Reassigned to …".
+  - Weekly Summary: prefs weekly_enabled/weekly_day; _send_weekly + hourly /api/cron/weekly (weekday+hour match); Settings weekly toggle + weekday select.
+  - Testing: iteration_7 frontend 100% (all 3 UI features + regression), zero bugs.
+
 ## Backlog (P1/P2)
 - P1: signed/expiring tokens or rate-limit on public receipt.pdf (id enumeration risk).
 - P2: persist OTP store outside process memory; align route naming to plural.

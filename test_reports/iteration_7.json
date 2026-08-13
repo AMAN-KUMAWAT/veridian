@@ -1,0 +1,26 @@
+{
+  "summary": "Frontend-only regression for v9 iteration. All 3 new UI features PASS: (1) Settings 'Send me a test digest now' button triggers 'Test digest sent to <email>' toast. (2) Settings Weekly summary toggle + weekday select persist across reload (enabled=true, day=4/Friday verified via GET /api/settings after reload). (3) Cluster legend note is rendered under the heatmap legend with expected text about average composite risk. (4) Reassign submission: reassign-select shows the other authorized reviewers (filtered to exclude current assignee), selecting one calls POST /submissions/{id}/reassign, updates the assignee-badge, shows 'Reassigned to <email>' toast, and appends a 'Reassigned to …' entry to the activity-trail (verified via backend GET after action). Regression: OTP login (verify-otp field name is 'otp' not 'code'), inbox loads, submission detail loads, claim/release flow works.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/it7_dashboard.png", "/app/test_reports/it7_settings.png", "/app/test_reports/it7_reassign.png"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Settings.jsx: weekly_day/hour committed correctly via onChange={e => set(Number(e.target.value))}. Prior iteration_6 select flake did NOT reproduce in this run — select_option('4') persisted through Save+reload cleanly.",
+    "SubmissionDetail.jsx line 158: <select value=\"\" onChange={reassign}> is a good pattern — resets to placeholder after each reassign; reviewers list correctly filtered by rec.assigned_to.",
+    "SubmissionDetail.jsx reassign() (line 109-117): optimistically updates rec.assigned_to and activity locally, matching backend response. Consider disabling the reassign-select while the POST is in flight to avoid double-dispatch, but not critical.",
+    "Dashboard.jsx cluster-legend-note (line 152) is a plain <p> — text is clear and mentions 'average composite risk' as required. Good.",
+    "Backend endpoint /api/auth/verify-otp expects field name 'otp' (not 'code' as some docs/prior tests used). Test-credentials note could be clearer, but not a bug."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (all 3 new features + regression passing)"},
+  "test_credentials": "OTP login amankunawat4u@gmail.com (whitelist). OTP read from /var/log/supervisor/backend.err.log line '[OTP] Generated code for <email>: NNNNNN'. verify-otp payload uses key 'otp' (not 'code'). Rate-limited ~3/10min.",
+  "seed_data_creation": "None. Settings weekly_day was momentarily changed to 4 during test; restored to original 2 via PUT /api/settings at end. Submission VRD-28B8D344 was reassigned from aman7339811186@gmail.com -> amankunawat4u@gmail.com (retained, since either state is valid and both users are authorized reviewers).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Token cookie approach still works: name=veridian_token, domain=veridian-submission.preview.emergentagent.com, path=/, httpOnly, secure, sameSite='None'. Reviewers pool is 3 whitelisted emails. reassign-select uses controlled value=\"\" (placeholder) with onChange — select_option(value=email) followed by 300ms wait fires reassign() correctly. If ever it doesn't, fallback: use native setter + dispatchEvent('change'). All 4 features in review_request are verified working end-to-end.",
+  "rca of the issue": "N/A — no bugs found."
+}

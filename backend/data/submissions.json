@@ -2083,10 +2083,30 @@
       "security_risk": 0.0
     },
     "natcat_composite_score": 37.5,
-    "submission_status": "Received",
-    "review_note": "",
-    "assigned_to": "",
-    "activity": [],
-    "ai_insight": ""
+    "submission_status": "Reviewed",
+    "review_note": "ok",
+    "assigned_to": "amankunawat4u@gmail.com",
+    "activity": [
+      {
+        "action": "reassigned",
+        "label": "Reassigned to aman7339811186@gmail.com",
+        "by": "amankunawat4u@gmail.com",
+        "at": "2026-08-13T09:46:17.859409+00:00"
+      },
+      {
+        "action": "reassigned",
+        "label": "Reassigned to amankunawat4u@gmail.com",
+        "by": "amankunawat4u@gmail.com",
+        "at": "2026-08-13T09:48:45.532576+00:00"
+      },
+      {
+        "action": "reviewed",
+        "label": "Reviewed",
+        "by": "amankunawat4u@gmail.com",
+        "at": "2026-08-13T09:48:51.220605+00:00",
+        "note": "ok"
+      }
+    ],
+    "ai_insight": "# CAT Portfolio Underwriting Review \u2014 Aman Kumawat\n\n---\n\n## (1) Dominant Perils Driving Loss\n\nWith an **Aggregate Expected CAT Loss of $187,500 on $500,000 TSI (37.5% loss ratio)**, the portfolio carries outsized frequency risk. The dominant drivers are **flood (55.0) and seismic (54.0)**, both elevated for the **Jhotwara, Jaipur** location \u2014 consistent with Rajasthan's flash-flood vulnerability and proximity to seismic Zone III. **Theft risk (50.0)** adds meaningful attritional pressure. Notably, **property condition scores critically low at 18.9**, amplifying severity potential across all perils.\n\n---\n\n## (2) Recommended Treaty Structure\n\nGiven single-policy concentration and high expected loss frequency, recommend **Excess of Loss (XoL)** over quota share. A quota share would cede profit margin unnecessarily given the concentrated, high-severity profile.\n\n- **Structure:** Per-Risk XoL with a **$50,000 retention** and **$450,000 limit**\n- **Suggested cession:** Cover **$450,000 xs $50,000**, transferring ~90% of peak severity exposure\n- Attach an **aggregate corridor clause** triggering at $100,000 annual loss to manage frequency bleed\n\n---\n\n## (3) Capital-Adequacy Caution\n\nA **single-policy, single-location portfolio** provides zero diversification. The expected loss of **$187,500 represents 37.5% of TSI** \u2014 well above the 10\u201315% underwriting threshold. Immediate **risk accumulation controls** are required before writing additional Jaipur-region risks to avoid correlated CAT aggregation."
   }
 ]

@@ -149,6 +149,7 @@ export default function Dashboard() {
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full inline-block" style={{ background: "#F59E0B" }} /> Moderate (40-59)</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full inline-block" style={{ background: "#EF4444" }} /> High (60+)</span>
         </div>
+        <p className="mt-2 text-xs text-[#1F2937]/50" data-testid="cluster-legend-note">Cluster color reflects the <b>average composite risk</b> of the policies grouped inside it (the small number shows that average); zoom in to see individual policies.</p>
 
         <div className="mt-10 flex items-center gap-2">
           <Inbox size={20} className="text-[#0EA5A0]" strokeWidth={1.5} />
